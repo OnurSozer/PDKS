@@ -15,7 +15,7 @@ serve(async (req) => {
     requireRole(user, ["operator"]);
 
     const body = await req.json();
-    const { email, password, first_name, last_name, phone, start_date, role, schedule } = body;
+    const { email, password, first_name, last_name, phone, start_date, role, schedule, leave_balances, leave_entitlements } = body;
 
     if (!email || !password || !first_name || !last_name) {
       throw new Error("email, password, first_name, and last_name are required");
@@ -81,6 +81,45 @@ serve(async (req) => {
         console.error("Failed to create schedule:", schedError.message);
       } else {
         scheduleData = sched;
+      }
+    }
+
+    // 4. Create leave entitlements if provided
+    if (Array.isArray(leave_entitlements) && leave_entitlements.length > 0) {
+      const entRows = leave_entitlements.map((ent: { leave_type_id: string; days_per_year: number }) => ({
+        employee_id: authData.user.id,
+        company_id: user.company_id,
+        leave_type_id: ent.leave_type_id,
+        days_per_year: ent.days_per_year,
+      }));
+
+      const { error: entError } = await supabaseAdmin
+        .from("employee_leave_entitlements")
+        .insert(entRows);
+
+      if (entError) {
+        console.error("Failed to create leave entitlements:", entError.message);
+      }
+    }
+
+    // 5. Create initial leave balances if provided
+    if (Array.isArray(leave_balances) && leave_balances.length > 0) {
+      const currentYear = new Date().getFullYear();
+      const rows = leave_balances.map((lb: { leave_type_id: string; total_days: number }) => ({
+        employee_id: authData.user.id,
+        company_id: user.company_id,
+        leave_type_id: lb.leave_type_id,
+        year: currentYear,
+        total_days: lb.total_days,
+        used_days: 0,
+      }));
+
+      const { error: lbError } = await supabaseAdmin
+        .from("leave_balances")
+        .insert(rows);
+
+      if (lbError) {
+        console.error("Failed to create leave balances:", lbError.message);
       }
     }
 

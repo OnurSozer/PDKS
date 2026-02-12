@@ -64,7 +64,7 @@ class SessionDetailScreen extends StatelessWidget {
                   ),
                   if (overtimeMultiplier != null)
                     _DetailRow(
-                      label: 'Multiplier',
+                      label: l10n.multiplier,
                       value: '${overtimeMultiplier}x',
                     ),
                 ],
@@ -73,7 +73,7 @@ class SessionDetailScreen extends StatelessWidget {
           if (notes != null && notes.isNotEmpty)
             _DetailCard(
               children: [
-                _DetailRow(label: 'Notes', value: notes),
+                _DetailRow(label: l10n.notes, value: notes),
               ],
             ),
         ],

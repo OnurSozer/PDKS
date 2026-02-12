@@ -85,7 +85,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 decoration: InputDecoration(labelText: l10n.confirmPassword),
                 validator: (value) {
                   if (value != newPasswordController.text) {
-                    return 'Passwords do not match';
+                    return l10n.passwordsDoNotMatch;
                   }
                   return null;
                 },
@@ -185,7 +185,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               radius: 48,
               backgroundColor: AppConstants.primaryColor,
               child: Text(
-                profile != null
+                profile != null && profile.firstName.isNotEmpty && profile.lastName.isNotEmpty
                     ? '${profile.firstName[0]}${profile.lastName[0]}'
                     : '',
                 style: const TextStyle(

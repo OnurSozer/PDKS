@@ -41,22 +41,52 @@ serve(async (req) => {
     const supabaseAdmin = getSupabaseAdmin();
     const currentYear = startDate.getFullYear();
 
-    // Check leave balance
-    const { data: balance, error: balanceError } = await supabaseAdmin
+    // Get leave type info
+    const { data: leaveType, error: ltError } = await supabaseAdmin
+      .from("leave_types")
+      .select("*")
+      .eq("id", leave_type_id)
+      .single();
+
+    if (ltError || !leaveType) {
+      throw new Error("Leave type not found");
+    }
+
+    // Check leave balance — auto-create if missing
+    let { data: balance, error: balanceError } = await supabaseAdmin
       .from("leave_balances")
       .select("*")
       .eq("employee_id", user.id)
       .eq("leave_type_id", leave_type_id)
       .eq("year", currentYear)
-      .single();
+      .maybeSingle();
 
-    if (balanceError || !balance) {
-      throw new Error("No leave balance found for this leave type and year");
+    if (!balance) {
+      // Auto-create balance using leave type defaults
+      const defaultDays = leaveType.default_days_per_year || 0;
+      const { data: newBalance, error: createError } = await supabaseAdmin
+        .from("leave_balances")
+        .insert({
+          employee_id: user.id,
+          company_id: user.company_id,
+          leave_type_id,
+          year: currentYear,
+          total_days: defaultDays,
+          used_days: 0,
+        })
+        .select()
+        .single();
+
+      if (createError) throw new Error(`Failed to create leave balance: ${createError.message}`);
+      balance = newBalance;
     }
 
-    const remainingDays = parseFloat(balance.total_days) - parseFloat(balance.used_days);
-    if (totalDays > remainingDays) {
-      throw new Error(`Insufficient leave balance. Available: ${remainingDays} days, Requested: ${totalDays} days`);
+    // Only check balance if the leave type has a day limit (total_days > 0)
+    if (parseFloat(balance.total_days) > 0) {
+      const remainingDays = parseFloat(balance.total_days) - parseFloat(balance.used_days);
+      if (totalDays > remainingDays) {
+        throw new Error(`Insufficient leave balance. Available: ${remainingDays} days, Requested: ${totalDays} days`);
+      }
     }
 
     // 1. Create leave record

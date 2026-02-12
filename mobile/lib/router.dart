@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'core/l10n/app_localizations.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/home/screens/home_screen.dart';
@@ -54,7 +55,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: ':id',
                 builder: (context, state) {
-                  final session = state.extra as Map<String, dynamic>;
+                  final session = state.extra as Map<String, dynamic>?;
+                  if (session == null) {
+                    return const Scaffold(
+                      body: Center(child: Text('Session not found')),
+                    );
+                  }
                   return SessionDetailScreen(session: session);
                 },
               ),
@@ -103,6 +109,7 @@ class _MainShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedIndex = _calculateSelectedIndex(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: child,
@@ -120,26 +127,26 @@ class _MainShell extends StatelessWidget {
               context.go('/profile');
           }
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: l10n.home,
           ),
           NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history),
-            label: 'Sessions',
+            icon: const Icon(Icons.history_outlined),
+            selectedIcon: const Icon(Icons.history),
+            label: l10n.sessions,
           ),
           NavigationDestination(
-            icon: Icon(Icons.beach_access_outlined),
-            selectedIcon: Icon(Icons.beach_access),
-            label: 'Leave',
+            icon: const Icon(Icons.beach_access_outlined),
+            selectedIcon: const Icon(Icons.beach_access),
+            label: l10n.leave,
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outlined),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person_outlined),
+            selectedIcon: const Icon(Icons.person),
+            label: l10n.profile,
           ),
         ],
       ),

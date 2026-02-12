@@ -58,6 +58,23 @@ export function useCreateEmployee() {
   });
 }
 
+export function useDeleteEmployee() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (employeeId: string) => {
+      const { data, error } = await supabase.functions.invoke('delete-employee', {
+        body: { employee_id: employeeId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+}
+
 export function useAllProfiles() {
   return useQuery({
     queryKey: ['all-profiles'],

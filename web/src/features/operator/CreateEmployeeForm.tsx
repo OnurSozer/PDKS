@@ -4,7 +4,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
 import { useCreateEmployee } from '../../hooks/useEmployees';
+import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
+import { LeaveType } from '../../types';
 import { ArrowLeft } from 'lucide-react';
 
 const schema = z.object({
@@ -24,6 +28,42 @@ export function CreateEmployeeForm() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const createEmployee = useCreateEmployee();
+  const { profile } = useAuth();
+  const companyId = profile?.company_id || undefined;
+
+  const [leaveEntitlements, setLeaveEntitlements] = useState<Record<string, number>>({});
+  const [leaveBalances, setLeaveBalances] = useState<Record<string, number>>({});
+
+  const { data: leaveTypes = [] } = useQuery({
+    queryKey: ['leave-types', companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leave_types')
+        .select('*')
+        .eq('company_id', companyId!)
+        .eq('is_active', true)
+        .order('name');
+      if (error) throw error;
+      return data as LeaveType[];
+    },
+    enabled: !!companyId,
+  });
+
+  // Initialize defaults when leave types load
+  React.useEffect(() => {
+    if (leaveTypes.length > 0 && Object.keys(leaveEntitlements).length === 0) {
+      const entDefaults: Record<string, number> = {};
+      const balDefaults: Record<string, number> = {};
+      leaveTypes.forEach((lt) => {
+        const days = lt.default_days_per_year || 0;
+        entDefaults[lt.id] = days;
+        balDefaults[lt.id] = days;
+      });
+      setLeaveEntitlements(entDefaults);
+      setLeaveBalances(balDefaults);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leaveTypes]);
 
   const {
     register,
@@ -36,6 +76,15 @@ export function CreateEmployeeForm() {
 
   const onSubmit = (data: FormData) => {
     setError('');
+
+    const leave_entitlements = Object.entries(leaveEntitlements)
+      .filter(([, days]) => days > 0)
+      .map(([leave_type_id, days_per_year]) => ({ leave_type_id, days_per_year }));
+
+    const leave_balances = Object.entries(leaveBalances)
+      .filter(([, days]) => days > 0)
+      .map(([leave_type_id, total_days]) => ({ leave_type_id, total_days }));
+
     createEmployee.mutate(
       {
         email: data.email,
@@ -45,6 +94,8 @@ export function CreateEmployeeForm() {
         phone: data.phone || undefined,
         start_date: data.start_date || undefined,
         role: data.role,
+        leave_entitlements: leave_entitlements.length > 0 ? leave_entitlements : undefined,
+        leave_balances: leave_balances.length > 0 ? leave_balances : undefined,
       },
       {
         onSuccess: () => navigate('/operator/employees'),
@@ -143,6 +194,67 @@ export function CreateEmployeeForm() {
             </select>
           </div>
         </div>
+
+        {leaveTypes.length > 0 && (
+          <div className="mt-4 bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-white">
+              {t('employees.initialLeaveBalances')}
+            </h2>
+            <div className="space-y-3">
+              {leaveTypes.map((lt) => (
+                <div key={lt.id} className="flex items-center gap-3">
+                  <label className="text-sm text-zinc-300 w-48 shrink-0">
+                    {lt.name}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <span className="text-xs text-zinc-500 block mb-1">
+                        {t('employees.yearlyEntitlement')}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.5"
+                          value={leaveEntitlements[lt.id] ?? lt.default_days_per_year ?? 0}
+                          onChange={(e) =>
+                            setLeaveEntitlements((prev) => ({
+                              ...prev,
+                              [lt.id]: Number(e.target.value) || 0,
+                            }))
+                          }
+                          className={inputClasses + ' w-24'}
+                        />
+                        <span className="text-xs text-zinc-500">{t('employees.daysPerYear')}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs text-zinc-500 block mb-1">
+                        {t('employees.initialBalance')}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.5"
+                          value={leaveBalances[lt.id] ?? lt.default_days_per_year ?? 0}
+                          onChange={(e) =>
+                            setLeaveBalances((prev) => ({
+                              ...prev,
+                              [lt.id]: Number(e.target.value) || 0,
+                            }))
+                          }
+                          className={inputClasses + ' w-24'}
+                        />
+                        <span className="text-xs text-zinc-500">{t('employees.days')}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 flex justify-end gap-3">
           <Link

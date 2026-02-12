@@ -11,7 +11,18 @@
     "loginTitle": "PDKS'ye Giris",
     "loginSubtitle": "Devam etmek icin giris yapin",
     "invalidCredentials": "Gecersiz e-posta veya sifre",
-    "loginError": "Giris yapilamadi"
+    "loginError": "Giris yapilamadi",
+    "forgotPassword": "Sifremi unuttum?",
+    "resetPassword": "Sifre Sifirlama",
+    "resetPasswordSubtitle": "Sifirlama baglantisi almak icin e-postanizi girin",
+    "resetPasswordSent": "Sifre sifirlama baglantisi gonderildi. E-postanizi kontrol edin.",
+    "newPassword": "Yeni Sifre",
+    "confirmPassword": "Sifre Tekrar",
+    "passwordsDoNotMatch": "Sifreler eslesmiyor",
+    "passwordUpdated": "Sifre basariyla guncellendi. Giris yapabilirsiniz.",
+    "updatePassword": "Sifreyi Guncelle",
+    "backToLogin": "Girise Don",
+    "sendResetLink": "Sifirlama Baglantisi Gonder"
   },
   "nav": {
     "dashboard": "Kontrol Paneli",
@@ -109,7 +120,13 @@
     "sessionHistory": "Oturum Gecmisi",
     "schedule": "Vardiya",
     "employeeCreated": "Calisan basariyla olusturuldu",
-    "noSchedule": "Vardiya atanmamis"
+    "noSchedule": "Vardiya atanmamis",
+    "initialLeaveBalances": "Başlangıç İzin Bakiyeleri",
+    "yearlyEntitlement": "Yıllık Hak Edilen",
+    "initialBalance": "Başlangıç Bakiyesi",
+    "leaveEntitlements": "İzin Hakları",
+    "daysPerYear": "gün/yıl",
+    "days": "gün"
   },
   "sessions": {
     "title": "Oturumlar",
@@ -198,7 +215,11 @@
     "forgotClockoutEnabled": "Unutulan Cikis Hatirlatmasi",
     "forgotClockoutTime": "Hatirlatma Saati",
     "forgotClockoutOffset": "Vardiya Sonrasi Bekleme (dk)",
-    "settingsSaved": "Ayarlar basariyla kaydedildi"
+    "settingsSaved": "Ayarlar basariyla kaydedildi",
+    "leaveSettings": "İzin Ayarları",
+    "accrualMode": "İzin Tahakkuk Modu",
+    "accrualMonthly": "Aylık",
+    "accrualYearly": "Yıllık"
   },
   "days": {
     "monday": "Pazartesi",

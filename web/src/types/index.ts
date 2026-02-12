@@ -162,6 +162,18 @@ export interface NotificationSettings {
   forgot_clockout_enabled: boolean;
   forgot_clockout_time: string;
   forgot_clockout_offset_minutes: number;
+  leave_accrual_mode?: 'monthly' | 'yearly';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface EmployeeLeaveEntitlement {
+  id: string;
+  employee_id: string;
+  leave_type_id: string;
+  leave_type?: LeaveType;
+  company_id: string;
+  days_per_year: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -214,6 +226,8 @@ export interface CreateEmployeeRequest {
     custom_end_time?: string;
     custom_work_days?: number[];
   };
+  leave_balances?: Array<{ leave_type_id: string; total_days: number }>;
+  leave_entitlements?: Array<{ leave_type_id: string; days_per_year: number }>;
 }
 
 export interface EditSessionRequest {

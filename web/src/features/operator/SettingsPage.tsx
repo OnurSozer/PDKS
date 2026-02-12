@@ -15,6 +15,7 @@ export function SettingsPage() {
   const [forgotClockoutEnabled, setForgotClockoutEnabled] = useState(true);
   const [forgotClockoutTime, setForgotClockoutTime] = useState('18:30');
   const [forgotClockoutOffset, setForgotClockoutOffset] = useState(30);
+  const [leaveAccrualMode, setLeaveAccrualMode] = useState<'monthly' | 'yearly'>('monthly');
   const [saved, setSaved] = useState(false);
 
   const { data: settings } = useQuery({
@@ -36,6 +37,7 @@ export function SettingsPage() {
       setForgotClockoutEnabled(settings.forgot_clockout_enabled);
       setForgotClockoutTime(settings.forgot_clockout_time);
       setForgotClockoutOffset(settings.forgot_clockout_offset_minutes);
+      setLeaveAccrualMode(settings.leave_accrual_mode || 'monthly');
     }
   }, [settings]);
 
@@ -46,6 +48,7 @@ export function SettingsPage() {
         forgot_clockout_enabled: forgotClockoutEnabled,
         forgot_clockout_time: forgotClockoutTime,
         forgot_clockout_offset_minutes: forgotClockoutOffset,
+        leave_accrual_mode: leaveAccrualMode,
       };
 
       if (settings) {
@@ -74,7 +77,7 @@ export function SettingsPage() {
     <div>
       <h1 className="text-2xl font-bold font-display text-white mb-6">{t('settings.title')}</h1>
 
-      <div className="max-w-2xl">
+      <div className="max-w-2xl space-y-6">
         <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
           <h2 className="text-lg font-semibold text-white mb-4">
             {t('settings.notificationSettings')}
@@ -134,27 +137,67 @@ export function SettingsPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
 
-            <div className="pt-4 border-t border-zinc-800">
-              <button
-                onClick={() => saveMutation.mutate()}
-                disabled={saveMutation.isPending}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all"
-              >
-                {saved ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    {t('settings.settingsSaved')}
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    {saveMutation.isPending ? t('common.loading') : t('common.save')}
-                  </>
-                )}
-              </button>
+        {/* Leave Settings */}
+        <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">
+            {t('settings.leaveSettings')}
+          </h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
+                {t('settings.accrualMode')}
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="accrualMode"
+                    value="monthly"
+                    checked={leaveAccrualMode === 'monthly'}
+                    onChange={() => setLeaveAccrualMode('monthly')}
+                    className="w-4 h-4 text-amber-500 bg-zinc-800 border-zinc-600 focus:ring-amber-500/20"
+                  />
+                  <span className="text-sm text-zinc-200">{t('settings.accrualMonthly')}</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="accrualMode"
+                    value="yearly"
+                    checked={leaveAccrualMode === 'yearly'}
+                    onChange={() => setLeaveAccrualMode('yearly')}
+                    className="w-4 h-4 text-amber-500 bg-zinc-800 border-zinc-600 focus:ring-amber-500/20"
+                  />
+                  <span className="text-sm text-zinc-200">{t('settings.accrualYearly')}</span>
+                </label>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Save button */}
+        <div>
+          <button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all"
+          >
+            {saved ? (
+              <>
+                <Check className="w-4 h-4" />
+                {t('settings.settingsSaved')}
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                {saveMutation.isPending ? t('common.loading') : t('common.save')}
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

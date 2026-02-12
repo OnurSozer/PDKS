@@ -21,6 +21,18 @@ class _RecordLeaveScreenState extends ConsumerState<RecordLeaveScreen> {
   DateTime _endDate = DateTime.now();
 
   @override
+  void initState() {
+    super.initState();
+    // Ensure leave types are loaded when navigating directly to this screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = ref.read(leaveProvider);
+      if (state.leaveTypes.isEmpty && !state.isLoading) {
+        ref.read(leaveProvider.notifier).loadAll();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _reasonController.dispose();
     super.dispose();
@@ -64,11 +76,23 @@ class _RecordLeaveScreenState extends ConsumerState<RecordLeaveScreen> {
               : null,
         );
 
-    if (success && mounted) {
+    if (!mounted) return;
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.leaveRecorded)),
+        SnackBar(
+          content: Text(l10n.leaveRecorded),
+          backgroundColor: AppConstants.clockInColor,
+        ),
       );
       context.pop();
+    } else {
+      final error = ref.read(leaveProvider).error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? l10n.error),
+          backgroundColor: AppConstants.clockOutColor,
+        ),
+      );
     }
   }
 
@@ -76,6 +100,56 @@ class _RecordLeaveScreenState extends ConsumerState<RecordLeaveScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(leaveProvider);
     final l10n = AppLocalizations.of(context);
+
+    // Show loading if leave types haven't loaded yet
+    if (state.isLoading && state.leaveTypes.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.recordLeave)),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Show error if loading failed
+    if (state.error != null && state.leaveTypes.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.recordLeave)),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: AppConstants.clockOutColor),
+              const SizedBox(height: 16),
+              Text(state.error!, style: const TextStyle(color: AppConstants.textSecondary)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.read(leaveProvider.notifier).loadAll(),
+                child: Text(l10n.retry),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Show message if no leave types configured for this company
+    if (state.leaveTypes.isEmpty && !state.isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.recordLeave)),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.info_outline, size: 48, color: AppConstants.textMuted),
+              const SizedBox(height: 16),
+              Text(
+                l10n.noLeaveTypes,
+                style: const TextStyle(color: AppConstants.textSecondary, fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -89,6 +163,7 @@ class _RecordLeaveScreenState extends ConsumerState<RecordLeaveScreen> {
             // Leave Type Dropdown
             DropdownButtonFormField<String>(
               value: _selectedLeaveTypeId,
+              dropdownColor: AppConstants.surfaceColor,
               decoration: InputDecoration(
                 labelText: l10n.leaveType,
                 prefixIcon: const Icon(Icons.category_outlined),

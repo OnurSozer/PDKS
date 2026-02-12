@@ -1,8 +1,13 @@
-import 'dart:convert';
 import '../../../core/services/supabase_service.dart';
 
 class LeaveRepository {
   final _client = SupabaseService.client;
+
+  Map<String, dynamic> _parseResponse(dynamic data) {
+    return data is String
+        ? (Map<String, dynamic>.from(data as dynamic))
+        : data as Map<String, dynamic>;
+  }
 
   Future<List<Map<String, dynamic>>> getLeaveBalances({
     required String employeeId,
@@ -52,7 +57,7 @@ class LeaveRepository {
         if (reason != null && reason.isNotEmpty) 'reason': reason,
       },
     );
-    return jsonDecode(response.data as String) as Map<String, dynamic>;
+    return _parseResponse(response.data);
   }
 
   Future<Map<String, dynamic>> cancelLeave(String leaveRecordId) async {
@@ -60,6 +65,6 @@ class LeaveRepository {
       'cancel-leave',
       body: {'leave_record_id': leaveRecordId},
     );
-    return jsonDecode(response.data as String) as Map<String, dynamic>;
+    return _parseResponse(response.data);
   }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { LanguageSwitcher } from '../../components/shared/LanguageSwitcher';
@@ -130,6 +130,14 @@ export function LoginPage() {
             >
               {loading ? t('common.loading') : t('auth.login')}
             </button>
+            <div className="text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-zinc-400 hover:text-amber-400 transition-colors"
+              >
+                {t('auth.forgotPassword')}
+              </Link>
+            </div>
           </form>
         </div>
       </div>

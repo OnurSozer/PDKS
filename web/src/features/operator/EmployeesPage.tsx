@@ -1,18 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
 import { useAuth } from '../../hooks/useAuth';
-import { useEmployees } from '../../hooks/useEmployees';
+import { useEmployees, useDeleteEmployee } from '../../hooks/useEmployees';
 import { Profile } from '../../types';
 import { DataTable } from '../../components/shared/DataTable';
-import { Plus, Eye } from 'lucide-react';
+import { Plus, Eye, Trash2 } from 'lucide-react';
 
 export function EmployeesPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
   const companyId = profile?.company_id || undefined;
   const { data: employees = [], isLoading } = useEmployees(companyId);
+  const deleteEmployee = useDeleteEmployee();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = (emp: Profile) => {
+    if (!window.confirm(`${emp.first_name} ${emp.last_name} - ${t('common.confirm')}?`)) return;
+    setDeletingId(emp.id);
+    deleteEmployee.mutate(emp.id, {
+      onSettled: () => setDeletingId(null),
+    });
+  };
 
   const columns: ColumnDef<Profile, any>[] = [
     {
@@ -74,13 +84,23 @@ export function EmployeesPage() {
       id: 'actions',
       header: t('common.actions'),
       cell: ({ row }) => (
-        <Link
-          to={`/operator/employees/${row.original.id}`}
-          className="inline-flex items-center gap-1 text-sm text-amber-500 hover:text-amber-400 transition-colors"
-        >
-          <Eye className="w-4 h-4" />
-          {t('common.view')}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to={`/operator/employees/${row.original.id}`}
+            className="inline-flex items-center gap-1 text-sm text-amber-500 hover:text-amber-400 transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+            {t('common.view')}
+          </Link>
+          <button
+            onClick={() => handleDelete(row.original)}
+            disabled={deletingId === row.original.id}
+            className="inline-flex items-center gap-1 text-sm text-rose-500 hover:text-rose-400 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            {t('common.delete')}
+          </button>
+        </div>
       ),
       enableSorting: false,
     },

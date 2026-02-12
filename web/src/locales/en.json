@@ -11,7 +11,18 @@
     "loginTitle": "Sign in to PDKS",
     "loginSubtitle": "Sign in to continue",
     "invalidCredentials": "Invalid email or password",
-    "loginError": "Login failed"
+    "loginError": "Login failed",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "resetPasswordSubtitle": "Enter your email to receive a reset link",
+    "resetPasswordSent": "Password reset link sent. Check your email.",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "passwordUpdated": "Password updated successfully. You can now log in.",
+    "updatePassword": "Update Password",
+    "backToLogin": "Back to Login",
+    "sendResetLink": "Send Reset Link"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -109,7 +120,13 @@
     "sessionHistory": "Session History",
     "schedule": "Schedule",
     "employeeCreated": "Employee created successfully",
-    "noSchedule": "No schedule assigned"
+    "noSchedule": "No schedule assigned",
+    "initialLeaveBalances": "Initial Leave Balances",
+    "yearlyEntitlement": "Yearly Entitlement",
+    "initialBalance": "Initial Balance",
+    "leaveEntitlements": "Leave Entitlements",
+    "daysPerYear": "days/year",
+    "days": "days"
   },
   "sessions": {
     "title": "Sessions",
@@ -198,7 +215,11 @@
     "forgotClockoutEnabled": "Forgot Clock-out Reminder",
     "forgotClockoutTime": "Reminder Time",
     "forgotClockoutOffset": "Offset After Shift End (min)",
-    "settingsSaved": "Settings saved successfully"
+    "settingsSaved": "Settings saved successfully",
+    "leaveSettings": "Leave Settings",
+    "accrualMode": "Leave Accrual Mode",
+    "accrualMonthly": "Monthly",
+    "accrualYearly": "Yearly"
   },
   "days": {
     "monday": "Monday",
