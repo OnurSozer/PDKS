@@ -126,7 +126,7 @@ class _DetailRow extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppConstants.textSecondary,
                 fontSize: 14,
               ),
@@ -136,6 +136,7 @@ class _DetailRow extends StatelessWidget {
             child: Text(
               value,
               style: const TextStyle(
+                color: AppConstants.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),

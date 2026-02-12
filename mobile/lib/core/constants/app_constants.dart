@@ -1,27 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConstants {
   AppConstants._();
 
-  // Supabase — replace with your project credentials
-  static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://your-project.supabase.co');
-  static const String supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'your-anon-key-here');
+  // Supabase — loaded from .env at runtime
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
-  // Colors
-  static const Color primaryColor = Color(0xFF1565C0);
-  static const Color primaryLight = Color(0xFF5E92F3);
-  static const Color primaryDark = Color(0xFF003C8F);
-  static const Color accentColor = Color(0xFF26A69A);
-  static const Color clockInColor = Color(0xFF43A047);
-  static const Color clockOutColor = Color(0xFFE53935);
-  static const Color mealReadyColor = Color(0xFFFFA726);
-  static const Color overtimeColor = Color(0xFFAB47BC);
-  static const Color leaveColor = Color(0xFF42A5F5);
-  static const Color backgroundColor = Color(0xFFF5F5F5);
-  static const Color surfaceColor = Colors.white;
-  static const Color errorColor = Color(0xFFD32F2F);
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF757575);
+  // Obsidian Theme Colors
+  static const Color primaryColor = Color(0xFFF59E0B);   // amber-500
+  static const Color primaryLight = Color(0xFFFBBF24);   // amber-400
+  static const Color primaryDark = Color(0xFFD97706);    // amber-600
+  static const Color accentColor = Color(0xFFF59E0B);    // amber-500
+
+  // Semantic Colors
+  static const Color clockInColor = Color(0xFF10B981);   // emerald-500
+  static const Color clockOutColor = Color(0xFFF43F5E);  // rose-500
+  static const Color mealReadyColor = Color(0xFFF59E0B); // amber-500
+  static const Color overtimeColor = Color(0xFF8B5CF6);  // violet-500
+  static const Color leaveColor = Color(0xFF0EA5E9);     // sky-500
+  static const Color errorColor = Color(0xFFF43F5E);     // rose-500
+
+  // Surface Colors (Obsidian)
+  static const Color backgroundColor = Color(0xFF09090B);  // zinc-950
+  static const Color surfaceColor = Color(0xFF18181B);     // zinc-900
+  static const Color cardColor = Color(0xFF18181B);        // zinc-900
+  static const Color inputColor = Color(0xFF27272A);       // zinc-800
+  static const Color borderColor = Color(0xFF3F3F46);      // zinc-700
+
+  // Text Colors
+  static const Color textPrimary = Color(0xFFE4E4E7);    // zinc-200
+  static const Color textSecondary = Color(0xFFA1A1AA);   // zinc-400
+  static const Color textMuted = Color(0xFF71717A);       // zinc-500
 
   // Sizes
   static const double paddingXS = 4.0;

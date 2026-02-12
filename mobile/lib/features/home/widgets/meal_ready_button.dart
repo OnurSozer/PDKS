@@ -28,7 +28,7 @@ class MealReadyButton extends StatelessWidget {
           onPressed: isLoading ? null : () => _confirmAndSend(context),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppConstants.mealReadyColor,
-            foregroundColor: Colors.white,
+            foregroundColor: Colors.black,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppConstants.borderRadius),
             ),
@@ -38,7 +38,7 @@ class MealReadyButton extends StatelessWidget {
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                    color: Colors.white,
+                    color: Colors.black,
                     strokeWidth: 2,
                   ),
                 )
@@ -71,7 +71,7 @@ class MealReadyButton extends StatelessWidget {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppConstants.mealReadyColor,
-              foregroundColor: Colors.white,
+              foregroundColor: Colors.black,
             ),
             child: Text(l10n.confirm),
           ),

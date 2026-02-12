@@ -23,7 +23,7 @@ class ScheduleViewScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.event_busy, size: 64, color: Colors.grey.shade300),
+                      const Icon(Icons.event_busy, size: 64, color: AppConstants.textMuted),
                       const SizedBox(height: 16),
                       Text(
                         l10n.noScheduleAssigned,
@@ -120,14 +120,19 @@ class ScheduleViewScreen extends ConsumerWidget {
                     return Chip(
                       label: Text(dayNames[index]),
                       backgroundColor: isWorkDay
-                          ? AppConstants.primaryColor.withValues(alpha: 0.1)
-                          : Colors.grey.shade100,
+                          ? AppConstants.primaryColor.withValues(alpha: 0.15)
+                          : AppConstants.inputColor,
                       labelStyle: TextStyle(
                         color: isWorkDay
                             ? AppConstants.primaryColor
-                            : AppConstants.textSecondary,
+                            : AppConstants.textMuted,
                         fontWeight:
                             isWorkDay ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      side: BorderSide(
+                        color: isWorkDay
+                            ? AppConstants.primaryColor.withValues(alpha: 0.3)
+                            : AppConstants.borderColor,
                       ),
                     );
                   }),

@@ -144,7 +144,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ref.read(authProvider.notifier).signOut();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.errorColor,
+              backgroundColor: AppConstants.clockOutColor,
               foregroundColor: Colors.white,
             ),
             child: Text(l10n.logout),
@@ -190,7 +190,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     : '',
                 style: const TextStyle(
                   fontSize: 32,
-                  color: Colors.white,
+                  color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -244,10 +244,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           const Divider(height: 16),
           ListTile(
-            leading: Icon(Icons.logout, color: AppConstants.errorColor),
+            leading: const Icon(Icons.logout, color: AppConstants.clockOutColor),
             title: Text(
               l10n.logout,
-              style: TextStyle(color: AppConstants.errorColor),
+              style: const TextStyle(color: AppConstants.clockOutColor),
             ),
             onTap: _confirmLogout,
           ),
@@ -287,14 +287,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onPressed: isLoading ? null : _saveProfile,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConstants.primaryColor,
-                foregroundColor: Colors.white,
+                foregroundColor: Colors.black,
               ),
               child: isLoading
                   ? const SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        color: Colors.black,
                         strokeWidth: 2,
                       ),
                     )
@@ -343,13 +343,13 @@ class _InfoRow extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(color: AppConstants.textSecondary, fontSize: 14),
+              style: const TextStyle(color: AppConstants.textSecondary, fontSize: 14),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              style: const TextStyle(color: AppConstants.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),
         ],

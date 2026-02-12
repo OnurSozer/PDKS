@@ -165,14 +165,14 @@ class _RecordLeaveScreenState extends ConsumerState<RecordLeaveScreen> {
                 onPressed: state.isLoading ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppConstants.primaryColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Colors.black,
                 ),
                 child: state.isLoading
                     ? const SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: Colors.black,
                           strokeWidth: 2,
                         ),
                       )

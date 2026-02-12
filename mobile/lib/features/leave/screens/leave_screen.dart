@@ -22,7 +22,7 @@ class LeaveScreen extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: Text(l10n.recordLeave),
         backgroundColor: AppConstants.primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: Colors.black,
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(leaveProvider.notifier).loadAll(),
@@ -42,6 +42,7 @@ class LeaveScreen extends ConsumerWidget {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: AppConstants.textPrimary,
                   ),
                 ),
               ),
@@ -60,6 +61,7 @@ class LeaveScreen extends ConsumerWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: AppConstants.textPrimary,
                 ),
               ),
             ),
@@ -74,7 +76,7 @@ class LeaveScreen extends ConsumerWidget {
                 child: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.beach_access, size: 48, color: Colors.grey.shade300),
+                      const Icon(Icons.beach_access, size: 48, color: AppConstants.textMuted),
                       const SizedBox(height: 8),
                       Text(
                         l10n.noLeaveRecords,
@@ -120,7 +122,7 @@ class LeaveScreen extends ConsumerWidget {
               ref.read(leaveProvider.notifier).cancelLeave(record['id'] as String);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.errorColor,
+              backgroundColor: AppConstants.clockOutColor,
               foregroundColor: Colors.white,
             ),
             child: Text(l10n.yes),
@@ -165,7 +167,7 @@ class _BalanceCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: AppConstants.borderColor,
                 color: AppConstants.leaveColor,
                 minHeight: 8,
               ),
@@ -212,6 +214,19 @@ class _LeaveRecordCard extends StatelessWidget {
     final reason = record['reason'] as String?;
     final status = record['status'] as String;
     final isActive = status == 'active';
+    final isCancelled = status == 'cancelled';
+
+    Color statusColor() {
+      if (isActive) return AppConstants.clockInColor;
+      if (isCancelled) return AppConstants.clockOutColor;
+      return AppConstants.primaryColor; // pending
+    }
+
+    String statusLabel() {
+      if (isActive) return l10n.active;
+      if (isCancelled) return l10n.cancelled;
+      return status; // pending or other
+    }
 
     return Card(
       margin: const EdgeInsets.symmetric(
@@ -233,18 +248,15 @@ class _LeaveRecordCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: (isActive ? AppConstants.clockInColor : AppConstants.errorColor)
-                        .withValues(alpha: 0.1),
+                    color: statusColor().withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    isActive ? l10n.active : l10n.cancelled,
+                    statusLabel(),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isActive
-                          ? AppConstants.clockInColor
-                          : AppConstants.errorColor,
+                      color: statusColor(),
                     ),
                   ),
                 ),
@@ -279,7 +291,7 @@ class _LeaveRecordCard extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: onCancel,
-                  style: TextButton.styleFrom(foregroundColor: AppConstants.errorColor),
+                  style: TextButton.styleFrom(foregroundColor: AppConstants.clockOutColor),
                   child: Text(l10n.cancelLeave),
                 ),
               ),

@@ -1,15 +1,20 @@
-import 'dart:convert';
 import '../../../core/services/supabase_service.dart';
 
 class SessionRepository {
   final _client = SupabaseService.client;
+
+  Map<String, dynamic> _parseResponse(dynamic data) {
+    return data is String
+        ? (Map<String, dynamic>.from(data as dynamic))
+        : data as Map<String, dynamic>;
+  }
 
   Future<Map<String, dynamic>> clockIn() async {
     final response = await _client.functions.invoke(
       'clock-in',
       body: {},
     );
-    return jsonDecode(response.data as String) as Map<String, dynamic>;
+    return _parseResponse(response.data);
   }
 
   Future<Map<String, dynamic>> clockOut(String sessionId) async {
@@ -17,7 +22,7 @@ class SessionRepository {
       'clock-out',
       body: {'session_id': sessionId},
     );
-    return jsonDecode(response.data as String) as Map<String, dynamic>;
+    return _parseResponse(response.data);
   }
 
   Future<Map<String, dynamic>> submitMissedClockOut({
@@ -31,7 +36,7 @@ class SessionRepository {
         'clock_out_time': clockOutTime,
       },
     );
-    return jsonDecode(response.data as String) as Map<String, dynamic>;
+    return _parseResponse(response.data);
   }
 
   Future<Map<String, dynamic>> notifyMealReady() async {
@@ -39,7 +44,7 @@ class SessionRepository {
       'notify-meal-ready',
       body: {},
     );
-    return jsonDecode(response.data as String) as Map<String, dynamic>;
+    return _parseResponse(response.data);
   }
 
   Future<List<Map<String, dynamic>>> getTodaySessions(String employeeId) async {

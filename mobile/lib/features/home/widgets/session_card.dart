@@ -18,6 +18,14 @@ class SessionCard extends StatelessWidget {
     final totalMinutes = session['total_minutes'] as int?;
     final isActive = status == 'active';
 
+    final accentColor = switch (status) {
+      'active' => AppConstants.clockInColor,
+      'completed' => AppConstants.primaryColor,
+      'edited' => AppConstants.overtimeColor,
+      'cancelled' => AppConstants.clockOutColor,
+      _ => AppConstants.textMuted,
+    };
+
     return Card(
       margin: const EdgeInsets.symmetric(
         horizontal: AppConstants.paddingMD,
@@ -31,7 +39,7 @@ class SessionCard extends StatelessWidget {
               width: 4,
               height: 50,
               decoration: BoxDecoration(
-                color: isActive ? AppConstants.clockInColor : AppConstants.primaryColor,
+                color: accentColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -56,9 +64,9 @@ class SessionCard extends StatelessWidget {
                         ),
                       ),
                       if (clockOut != null) ...[
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Icon(Icons.arrow_forward, size: 14, color: Colors.grey),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Icon(Icons.arrow_forward, size: 14, color: AppConstants.textMuted),
                         ),
                         Icon(
                           Icons.logout,
@@ -123,14 +131,14 @@ class _StatusBadge extends StatelessWidget {
       'active' => (l10n.active, AppConstants.clockInColor),
       'completed' => (l10n.completed, AppConstants.primaryColor),
       'edited' => (l10n.edited, AppConstants.overtimeColor),
-      'cancelled' => (l10n.cancelled, AppConstants.errorColor),
-      _ => (status, Colors.grey),
+      'cancelled' => (l10n.cancelled, AppConstants.clockOutColor),
+      _ => (status, AppConstants.textMuted),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

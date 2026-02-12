@@ -194,7 +194,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                       Icon(
                         Icons.event_busy,
                         size: 48,
-                        color: Colors.grey.shade300,
+                        color: AppConstants.textMuted,
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -232,14 +232,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       success = await ref.read(sessionProvider.notifier).clockOut();
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.clockOutSuccess)),
+          SnackBar(
+            content: Text(l10n.clockOutSuccess),
+            backgroundColor: AppConstants.clockOutColor,
+          ),
         );
       }
     } else {
       success = await ref.read(sessionProvider.notifier).clockIn();
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.clockInSuccess)),
+          SnackBar(
+            content: Text(l10n.clockInSuccess),
+            backgroundColor: AppConstants.clockInColor,
+          ),
         );
       }
     }

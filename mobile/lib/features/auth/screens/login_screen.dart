@@ -122,14 +122,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onPressed: authState.isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppConstants.primaryColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: Colors.black,
                       ),
                       child: authState.isLoading
                           ? const SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: Colors.black,
                                 strokeWidth: 2,
                               ),
                             )

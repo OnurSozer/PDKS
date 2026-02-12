@@ -106,7 +106,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       if (response.user != null) {
         await _loadProfile(response.user!.id);
-        return true;
+        return state.isAuthenticated;
       }
       state = state.copyWith(isLoading: false, error: 'Login failed');
       return false;

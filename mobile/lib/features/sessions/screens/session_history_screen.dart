@@ -45,17 +45,39 @@ class SessionHistoryScreen extends ConsumerWidget {
             },
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
-                color: AppConstants.primaryLight.withValues(alpha: 0.5),
+                color: AppConstants.primaryColor.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               selectedDecoration: const BoxDecoration(
                 color: AppConstants.primaryColor,
                 shape: BoxShape.circle,
               ),
+              defaultTextStyle: const TextStyle(color: AppConstants.textPrimary),
+              weekendTextStyle: const TextStyle(color: AppConstants.textSecondary),
+              outsideTextStyle: const TextStyle(color: AppConstants.textMuted),
+              todayTextStyle: const TextStyle(color: AppConstants.textPrimary),
+              selectedTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              disabledTextStyle: const TextStyle(color: AppConstants.textMuted),
             ),
-            headerStyle: const HeaderStyle(
+            headerStyle: HeaderStyle(
               formatButtonVisible: false,
               titleCentered: true,
+              titleTextStyle: const TextStyle(
+                color: AppConstants.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+              leftChevronIcon: const Icon(Icons.chevron_left, color: AppConstants.primaryColor),
+              rightChevronIcon: const Icon(Icons.chevron_right, color: AppConstants.primaryColor),
+              formatButtonTextStyle: const TextStyle(color: AppConstants.primaryColor),
+              formatButtonDecoration: BoxDecoration(
+                border: Border.all(color: AppConstants.primaryColor),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            daysOfWeekStyle: const DaysOfWeekStyle(
+              weekdayStyle: TextStyle(color: AppConstants.textSecondary, fontSize: 13),
+              weekendStyle: TextStyle(color: AppConstants.textMuted, fontSize: 13),
             ),
             startingDayOfWeek: StartingDayOfWeek.monday,
           ),
@@ -72,10 +94,10 @@ class SessionHistoryScreen extends ConsumerWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.event_busy,
                               size: 48,
-                              color: Colors.grey.shade300,
+                              color: AppConstants.textMuted,
                             ),
                             const SizedBox(height: 8),
                             Text(
