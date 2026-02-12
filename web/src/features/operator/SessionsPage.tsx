@@ -82,10 +82,10 @@ export function SessionsPage() {
       cell: ({ getValue }) => {
         const status = getValue() as string;
         const styles: Record<string, string> = {
-          active: 'bg-green-100 text-green-700',
-          completed: 'bg-blue-100 text-blue-700',
-          edited: 'bg-yellow-100 text-yellow-700',
-          cancelled: 'bg-red-100 text-red-700',
+          active: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+          completed: 'bg-sky-500/10 text-sky-400 border border-sky-500/20',
+          edited: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+          cancelled: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
         };
         const labels: Record<string, string> = {
           active: t('sessions.statusActive'),
@@ -106,7 +106,7 @@ export function SessionsPage() {
       cell: ({ row }) => (
         <button
           onClick={() => setEditSession(row.original)}
-          className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+          className="inline-flex items-center gap-1 text-sm text-amber-500 hover:text-amber-400 transition-colors"
         >
           <Pencil className="w-4 h-4" />
           {t('common.edit')}
@@ -118,7 +118,7 @@ export function SessionsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="text-2xl font-bold font-display text-white mb-6">
         {t('sessions.title')}
       </h1>
 
@@ -130,13 +130,13 @@ export function SessionsPage() {
           onEndDateChange={setEndDate}
         />
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">
+          <label className="block text-xs font-medium text-zinc-400 mb-1">
             {t('sessions.employee')}
           </label>
           <select
             value={employeeFilter}
             onChange={(e) => setEmployeeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+            className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-sm"
           >
             <option value="">{t('reports.allEmployees')}</option>
             {employees.map((emp) => (
@@ -150,7 +150,7 @@ export function SessionsPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
         </div>
       ) : (
         <DataTable data={sessions} columns={columns} />

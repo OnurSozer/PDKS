@@ -72,140 +72,112 @@ export function CreateCompanyForm() {
     mutation.mutate(data);
   };
 
+  const inputClasses = "mt-1 block w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-sm";
+
   return (
     <div>
       <Link
         to="/admin/companies"
-        className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-4"
+        className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white mb-4 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         {t('common.back')}
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="text-2xl font-bold font-display text-white mb-6">
         {t('superAdmin.createCompany')}
       </h1>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="mb-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
         {/* Company Info */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('superAdmin.companyInfo')}</h2>
+        <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">{t('superAdmin.companyInfo')}</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-zinc-300">
                 {t('superAdmin.companyName')} *
               </label>
-              <input
-                {...register('companyName')}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              />
+              <input {...register('companyName')} className={inputClasses} />
               {errors.companyName && (
-                <p className="mt-1 text-sm text-red-600">{t('common.required')}</p>
+                <p className="mt-1 text-sm text-rose-400">{t('common.required')}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-zinc-300">
                 {t('common.email')}
               </label>
-              <input
-                {...register('companyEmail')}
-                type="email"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              />
+              <input {...register('companyEmail')} type="email" className={inputClasses} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-zinc-300">
                   {t('common.phone')}
                 </label>
-                <input
-                  {...register('companyPhone')}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
+                <input {...register('companyPhone')} className={inputClasses} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-zinc-300">
                   {t('common.address')}
                 </label>
-                <input
-                  {...register('companyAddress')}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
+                <input {...register('companyAddress')} className={inputClasses} />
               </div>
             </div>
           </div>
         </div>
 
         {/* Operator Info */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('superAdmin.operatorInfo')}</h2>
+        <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">{t('superAdmin.operatorInfo')}</h2>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-zinc-300">
                   {t('superAdmin.operatorFirstName')} *
                 </label>
-                <input
-                  {...register('operatorFirstName')}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
+                <input {...register('operatorFirstName')} className={inputClasses} />
                 {errors.operatorFirstName && (
-                  <p className="mt-1 text-sm text-red-600">{t('common.required')}</p>
+                  <p className="mt-1 text-sm text-rose-400">{t('common.required')}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-zinc-300">
                   {t('superAdmin.operatorLastName')} *
                 </label>
-                <input
-                  {...register('operatorLastName')}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
+                <input {...register('operatorLastName')} className={inputClasses} />
                 {errors.operatorLastName && (
-                  <p className="mt-1 text-sm text-red-600">{t('common.required')}</p>
+                  <p className="mt-1 text-sm text-rose-400">{t('common.required')}</p>
                 )}
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-zinc-300">
                 {t('superAdmin.operatorEmail')} *
               </label>
-              <input
-                {...register('operatorEmail')}
-                type="email"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              />
+              <input {...register('operatorEmail')} type="email" className={inputClasses} />
               {errors.operatorEmail && (
-                <p className="mt-1 text-sm text-red-600">{t('common.required')}</p>
+                <p className="mt-1 text-sm text-rose-400">{t('common.required')}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-zinc-300">
                 {t('superAdmin.operatorPassword')} *
               </label>
-              <input
-                {...register('operatorPassword')}
-                type="password"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              />
+              <input {...register('operatorPassword')} type="password" className={inputClasses} />
               {errors.operatorPassword && (
-                <p className="mt-1 text-sm text-red-600">{t('common.required')}</p>
+                <p className="mt-1 text-sm text-rose-400">{t('common.required')}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-zinc-300">
                 {t('superAdmin.operatorPhone')}
               </label>
-              <input
-                {...register('operatorPhone')}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              />
+              <input {...register('operatorPhone')} className={inputClasses} />
             </div>
           </div>
         </div>
@@ -213,14 +185,14 @@ export function CreateCompanyForm() {
         <div className="flex justify-end gap-3">
           <Link
             to="/admin/companies"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors"
           >
             {t('common.cancel')}
           </Link>
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all"
           >
             {mutation.isPending ? t('common.loading') : t('common.create')}
           </button>

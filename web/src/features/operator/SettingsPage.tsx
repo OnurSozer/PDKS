@@ -25,7 +25,7 @@ export function SettingsPage() {
         .select('*')
         .eq('company_id', companyId!)
         .single();
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+      if (error && error.code !== 'PGRST116') throw error;
       return data as NotificationSettings | null;
     },
     enabled: !!companyId,
@@ -68,31 +68,32 @@ export function SettingsPage() {
     },
   });
 
+  const inputClasses = "mt-1 block w-48 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-sm";
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('settings.title')}</h1>
+      <h1 className="text-2xl font-bold font-display text-white mb-6">{t('settings.title')}</h1>
 
       <div className="max-w-2xl">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">
+        <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">
             {t('settings.notificationSettings')}
           </h2>
 
           <div className="space-y-6">
-            {/* Forgot clock-out toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-white">
                   {t('settings.forgotClockoutEnabled')}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-zinc-400 mt-1">
                   {t('settings.forgotClockoutOffset')}
                 </p>
               </div>
               <button
                 onClick={() => setForgotClockoutEnabled(!forgotClockoutEnabled)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                  forgotClockoutEnabled ? 'bg-primary-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
+                  forgotClockoutEnabled ? 'bg-amber-500' : 'bg-zinc-700'
                 }`}
               >
                 <span
@@ -105,22 +106,20 @@ export function SettingsPage() {
 
             {forgotClockoutEnabled && (
               <>
-                {/* Reminder time */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-zinc-300">
                     {t('settings.forgotClockoutTime')}
                   </label>
                   <input
                     type="time"
                     value={forgotClockoutTime}
                     onChange={(e) => setForgotClockoutTime(e.target.value)}
-                    className="mt-1 block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+                    className={inputClasses}
                   />
                 </div>
 
-                {/* Offset minutes */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-zinc-300">
                     {t('settings.forgotClockoutOffset')}
                   </label>
                   <input
@@ -129,19 +128,18 @@ export function SettingsPage() {
                     onChange={(e) => setForgotClockoutOffset(Number(e.target.value))}
                     min={0}
                     max={180}
-                    className="mt-1 block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+                    className={inputClasses}
                   />
-                  <p className="mt-1 text-xs text-gray-500">min</p>
+                  <p className="mt-1 text-xs text-zinc-500">min</p>
                 </div>
               </>
             )}
 
-            {/* Save button */}
-            <div className="pt-4 border-t border-gray-200">
+            <div className="pt-4 border-t border-zinc-800">
               <button
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all"
               >
                 {saved ? (
                   <>

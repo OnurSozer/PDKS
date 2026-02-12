@@ -45,7 +45,7 @@ export function ExportButton({ data, columns, filename }: ExportButtonProps) {
       head: [headers],
       body: rows,
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [37, 99, 235] },
+      headStyles: { fillColor: [245, 158, 11] },
     });
 
     doc.save(`${filename}.pdf`);
@@ -55,14 +55,14 @@ export function ExportButton({ data, columns, filename }: ExportButtonProps) {
     <div className="flex items-center gap-2">
       <button
         onClick={exportExcel}
-        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100"
+        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors"
       >
         <Download className="w-4 h-4" />
         {t('common.exportExcel')}
       </button>
       <button
         onClick={exportPdf}
-        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100"
+        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 transition-colors"
       >
         <Download className="w-4 h-4" />
         {t('common.exportPdf')}

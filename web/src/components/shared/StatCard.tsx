@@ -11,22 +11,22 @@ interface StatCardProps {
 }
 
 const colorMap = {
-  blue: 'bg-blue-50 text-blue-600',
-  green: 'bg-green-50 text-green-600',
-  yellow: 'bg-yellow-50 text-yellow-600',
-  red: 'bg-red-50 text-red-600',
-  purple: 'bg-purple-50 text-purple-600',
+  blue: 'bg-sky-500/10 text-sky-400',
+  green: 'bg-emerald-500/10 text-emerald-400',
+  yellow: 'bg-amber-500/10 text-amber-400',
+  red: 'bg-rose-500/10 text-rose-400',
+  purple: 'bg-violet-500/10 text-violet-400',
 };
 
 export function StatCard({ title, value, icon: Icon, color = 'blue', subtitle }: StatCardProps) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+    <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="mt-1 text-3xl font-semibold text-gray-900">{value}</p>
+          <p className="text-sm font-medium text-zinc-400">{title}</p>
+          <p className="mt-1 text-3xl font-semibold font-mono text-white">{value}</p>
           {subtitle && (
-            <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+            <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
           )}
         </div>
         <div className={cn('p-3 rounded-lg', colorMap[color])}>

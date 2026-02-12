@@ -27,7 +27,6 @@ export function LeavePage() {
   const [showCreateType, setShowCreateType] = useState(false);
   const [activeTab, setActiveTab] = useState<'records' | 'types'>('records');
 
-  // Leave types
   const { data: leaveTypes = [] } = useQuery({
     queryKey: ['leave-types', companyId],
     queryFn: async () => {
@@ -42,7 +41,6 @@ export function LeavePage() {
     enabled: !!companyId,
   });
 
-  // Leave records
   const { data: leaveRecords = [], isLoading } = useQuery({
     queryKey: ['leave-records', companyId],
     queryFn: async () => {
@@ -83,6 +81,8 @@ export function LeavePage() {
       reset();
     },
   });
+
+  const inputClasses = "mt-1 block w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-sm";
 
   const recordColumns: ColumnDef<LeaveRecord, any>[] = [
     {
@@ -125,7 +125,7 @@ export function LeavePage() {
         return (
           <span
             className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-              status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
             }`}
           >
             {status === 'active' ? t('common.active') : t('sessions.statusCancelled')}
@@ -148,7 +148,7 @@ export function LeavePage() {
       cell: ({ getValue }) => (
         <span
           className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-            getValue() ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+            getValue() ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-700 text-zinc-400'
           }`}
         >
           {getValue() ? t('common.yes') : t('common.no')}
@@ -161,7 +161,7 @@ export function LeavePage() {
       cell: ({ getValue }) => (
         <span
           className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-            getValue() ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            getValue() ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
           }`}
         >
           {getValue() ? t('common.active') : t('common.inactive')}
@@ -172,16 +172,16 @@ export function LeavePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('leave.title')}</h1>
+      <h1 className="text-2xl font-bold font-display text-white mb-6">{t('leave.title')}</h1>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-zinc-800">
         <button
           onClick={() => setActiveTab('records')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'records'
-              ? 'border-primary-600 text-primary-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-amber-500 text-amber-400'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
           }`}
         >
           {t('leave.leaveRecords')}
@@ -190,8 +190,8 @@ export function LeavePage() {
           onClick={() => setActiveTab('types')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'types'
-              ? 'border-primary-600 text-primary-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-amber-500 text-amber-400'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
           }`}
         >
           {t('leave.leaveTypes')}
@@ -201,7 +201,7 @@ export function LeavePage() {
       {activeTab === 'records' && (
         isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
           </div>
         ) : (
           <DataTable data={leaveRecords} columns={recordColumns} searchPlaceholder={`${t('common.search')}...`} />
@@ -213,7 +213,7 @@ export function LeavePage() {
           <div className="flex justify-end mb-4">
             <button
               onClick={() => setShowCreateType(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 transition-all"
             >
               <Plus className="w-4 h-4" />
               {t('leave.createLeaveType')}
@@ -226,33 +226,33 @@ export function LeavePage() {
       {/* Create leave type modal */}
       {showCreateType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setShowCreateType(false)} />
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCreateType(false)} />
+          <div className="relative bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">{t('leave.createLeaveType')}</h2>
-              <button onClick={() => setShowCreateType(false)}>
-                <X className="w-5 h-5 text-gray-400" />
+              <h2 className="text-lg font-semibold text-white">{t('leave.createLeaveType')}</h2>
+              <button onClick={() => setShowCreateType(false)} className="text-zinc-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleSubmit((data) => createTypeMutation.mutate(data))} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('leave.typeName')} *</label>
-                <input {...register('name')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm" />
-                {errors.name && <p className="mt-1 text-sm text-red-600">{t('common.required')}</p>}
+                <label className="block text-sm font-medium text-zinc-300">{t('leave.typeName')} *</label>
+                <input {...register('name')} className={inputClasses} />
+                {errors.name && <p className="mt-1 text-sm text-rose-400">{t('common.required')}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('leave.defaultDays')}</label>
-                <input type="number" {...register('default_days_per_year')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm" />
+                <label className="block text-sm font-medium text-zinc-300">{t('leave.defaultDays')}</label>
+                <input type="number" {...register('default_days_per_year')} className={inputClasses} />
               </div>
               <div className="flex items-center gap-2">
-                <input type="checkbox" {...register('is_paid')} id="is_paid" className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                <label htmlFor="is_paid" className="text-sm font-medium text-gray-700">{t('leave.isPaid')}</label>
+                <input type="checkbox" {...register('is_paid')} id="is_paid" className="h-4 w-4 rounded border-zinc-600 text-amber-500 focus:ring-amber-500/20 bg-zinc-800" />
+                <label htmlFor="is_paid" className="text-sm font-medium text-zinc-300">{t('leave.isPaid')}</label>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowCreateType(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                <button type="button" onClick={() => setShowCreateType(false)} className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors">
                   {t('common.cancel')}
                 </button>
-                <button type="submit" disabled={createTypeMutation.isPending} className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50">
+                <button type="submit" disabled={createTypeMutation.isPending} className="px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all">
                   {createTypeMutation.isPending ? t('common.loading') : t('common.create')}
                 </button>
               </div>

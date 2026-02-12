@@ -55,61 +55,61 @@ export function CompanyDetailPage() {
   if (companyLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
       </div>
     );
   }
 
   if (!company) {
-    return <div className="text-center py-12 text-gray-500">{t('common.noData')}</div>;
+    return <div className="text-center py-12 text-zinc-500">{t('common.noData')}</div>;
   }
 
   return (
     <div>
       <Link
         to="/admin/companies"
-        className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-4"
+        className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white mb-4 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         {t('common.back')}
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="text-2xl font-bold font-display text-white mb-6">
         {t('superAdmin.companyDetail')}
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Company Info */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Building2 className="w-5 h-5 text-primary-600" />
-            <h2 className="text-lg font-semibold">{t('superAdmin.companyInfo')}</h2>
+            <Building2 className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-semibold text-white">{t('superAdmin.companyInfo')}</h2>
           </div>
           <dl className="space-y-3">
             <div>
-              <dt className="text-sm font-medium text-gray-500">{t('common.name')}</dt>
-              <dd className="text-sm text-gray-900">{company.name}</dd>
+              <dt className="text-sm font-medium text-zinc-400">{t('common.name')}</dt>
+              <dd className="text-sm text-zinc-200">{company.name}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">{t('common.email')}</dt>
-              <dd className="text-sm text-gray-900">{company.email || '-'}</dd>
+              <dt className="text-sm font-medium text-zinc-400">{t('common.email')}</dt>
+              <dd className="text-sm text-zinc-200">{company.email || '-'}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">{t('common.phone')}</dt>
-              <dd className="text-sm text-gray-900">{company.phone || '-'}</dd>
+              <dt className="text-sm font-medium text-zinc-400">{t('common.phone')}</dt>
+              <dd className="text-sm text-zinc-200">{company.phone || '-'}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">{t('common.address')}</dt>
-              <dd className="text-sm text-gray-900">{company.address || '-'}</dd>
+              <dt className="text-sm font-medium text-zinc-400">{t('common.address')}</dt>
+              <dd className="text-sm text-zinc-200">{company.address || '-'}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">{t('common.status')}</dt>
+              <dt className="text-sm font-medium text-zinc-400">{t('common.status')}</dt>
               <dd>
                 <span
                   className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                     company.is_active
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                   }`}
                 >
                   {company.is_active ? t('common.active') : t('common.inactive')}
@@ -117,47 +117,47 @@ export function CompanyDetailPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">{t('nav.employees')}</dt>
-              <dd className="text-sm text-gray-900">{employeeCount}</dd>
+              <dt className="text-sm font-medium text-zinc-400">{t('nav.employees')}</dt>
+              <dd className="text-sm text-zinc-200">{employeeCount}</dd>
             </div>
           </dl>
         </div>
 
         {/* Operator Info */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <User className="w-5 h-5 text-primary-600" />
-            <h2 className="text-lg font-semibold">{t('superAdmin.operatorInfo')}</h2>
+            <User className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-semibold text-white">{t('superAdmin.operatorInfo')}</h2>
           </div>
           {operators.length === 0 ? (
-            <p className="text-sm text-gray-500">{t('common.noData')}</p>
+            <p className="text-sm text-zinc-500">{t('common.noData')}</p>
           ) : (
             <div className="space-y-4">
               {operators.map((op) => (
-                <div key={op.id} className="border border-gray-100 rounded-lg p-4">
+                <div key={op.id} className="border border-zinc-800 rounded-lg p-4">
                   <dl className="space-y-2">
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">{t('common.name')}</dt>
-                      <dd className="text-sm text-gray-900">
+                      <dt className="text-sm font-medium text-zinc-400">{t('common.name')}</dt>
+                      <dd className="text-sm text-zinc-200">
                         {op.first_name} {op.last_name}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">{t('common.email')}</dt>
-                      <dd className="text-sm text-gray-900">{op.email}</dd>
+                      <dt className="text-sm font-medium text-zinc-400">{t('common.email')}</dt>
+                      <dd className="text-sm text-zinc-200">{op.email}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">{t('common.phone')}</dt>
-                      <dd className="text-sm text-gray-900">{op.phone || '-'}</dd>
+                      <dt className="text-sm font-medium text-zinc-400">{t('common.phone')}</dt>
+                      <dd className="text-sm text-zinc-200">{op.phone || '-'}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">{t('common.status')}</dt>
+                      <dt className="text-sm font-medium text-zinc-400">{t('common.status')}</dt>
                       <dd>
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                             op.is_active
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                           }`}
                         >
                           {op.is_active ? t('common.active') : t('common.inactive')}

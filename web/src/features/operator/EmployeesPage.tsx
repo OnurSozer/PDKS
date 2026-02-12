@@ -38,8 +38,8 @@ export function EmployeesPage() {
           <span
             className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
               role === 'chef'
-                ? 'bg-orange-100 text-orange-700'
-                : 'bg-blue-100 text-blue-700'
+                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                : 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
             }`}
           >
             {role === 'chef' ? t('employees.roleChef') : t('employees.roleEmployee')}
@@ -62,8 +62,8 @@ export function EmployeesPage() {
         <span
           className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
             getValue()
-              ? 'bg-green-100 text-green-700'
-              : 'bg-red-100 text-red-700'
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
           }`}
         >
           {getValue() ? t('common.active') : t('common.inactive')}
@@ -76,7 +76,7 @@ export function EmployeesPage() {
       cell: ({ row }) => (
         <Link
           to={`/operator/employees/${row.original.id}`}
-          className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+          className="inline-flex items-center gap-1 text-sm text-amber-500 hover:text-amber-400 transition-colors"
         >
           <Eye className="w-4 h-4" />
           {t('common.view')}
@@ -89,7 +89,7 @@ export function EmployeesPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
       </div>
     );
   }
@@ -97,12 +97,12 @@ export function EmployeesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold font-display text-white">
           {t('employees.title')}
         </h1>
         <Link
           to="/operator/employees/new"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 transition-all"
         >
           <Plus className="w-4 h-4" />
           {t('employees.createEmployee')}

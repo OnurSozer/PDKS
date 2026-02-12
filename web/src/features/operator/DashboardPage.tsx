@@ -20,7 +20,13 @@ import {
   Cell,
 } from 'recharts';
 
-const PIE_COLORS = ['#22c55e', '#ef4444', '#f59e0b', '#3b82f6'];
+const PIE_COLORS = ['#10b981', '#ef4444', '#f59e0b', '#0ea5e9'];
+
+const darkTooltipStyle = {
+  contentStyle: { backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' },
+  itemStyle: { color: '#e4e4e7' },
+  labelStyle: { color: '#a1a1aa' },
+};
 
 export function OperatorDashboardPage() {
   const { t } = useTranslation();
@@ -57,7 +63,7 @@ export function OperatorDashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="text-2xl font-bold font-display text-white mb-6">
         {t('operator.todayOverview')}
       </h1>
 
@@ -96,8 +102,8 @@ export function OperatorDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Attendance breakdown pie chart */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('operator.todayOverview')}</h2>
+        <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">{t('operator.todayOverview')}</h2>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -115,32 +121,32 @@ export function OperatorDashboardPage() {
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip {...darkTooltipStyle} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-[300px] text-gray-400">
+            <div className="flex items-center justify-center h-[300px] text-zinc-500">
               {t('common.noData')}
             </div>
           )}
         </div>
 
         {/* Work hours bar chart */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('reports.dailyHours')}</h2>
+        <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">{t('reports.dailyHours')}</h2>
           {barData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={barData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="hours" fill="#3b82f6" name={t('sessions.regularHours')} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
+                <XAxis dataKey="name" tick={{ fill: '#a1a1aa', fontSize: 12 }} />
+                <YAxis tick={{ fill: '#a1a1aa' }} />
+                <Tooltip {...darkTooltipStyle} />
+                <Bar dataKey="hours" fill="#0ea5e9" name={t('sessions.regularHours')} />
                 <Bar dataKey="overtime" fill="#f59e0b" name={t('sessions.overtimeHours')} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-[300px] text-gray-400">
+            <div className="flex items-center justify-center h-[300px] text-zinc-500">
               {t('common.noData')}
             </div>
           )}
@@ -149,24 +155,24 @@ export function OperatorDashboardPage() {
 
       {/* Currently clocked in */}
       {activeSessions.length > 0 && (
-        <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-green-600" />
+        <div className="mt-6 bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-emerald-400" />
             {t('operator.openSessions')} ({activeSessions.length})
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {activeSessions.map((session) => (
               <div
                 key={session.id}
-                className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100"
+                className="flex items-center gap-3 p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20"
               >
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-white">
                     {(session.employee as any)?.first_name}{' '}
                     {(session.employee as any)?.last_name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-zinc-400">
                     {t('sessions.clockIn')}: {new Date(session.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>

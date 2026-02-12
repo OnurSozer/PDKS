@@ -101,6 +101,8 @@ export function OvertimeRulesPage() {
     custom: t('overtimeRules.custom'),
   };
 
+  const inputClasses = "mt-1 block w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-sm";
+
   const columns: ColumnDef<OvertimeRule, any>[] = [
     { accessorKey: 'name', header: t('overtimeRules.ruleName') },
     {
@@ -131,7 +133,7 @@ export function OvertimeRulesPage() {
             setAssignRuleId(row.original.id);
             setShowAssignForm(true);
           }}
-          className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+          className="inline-flex items-center gap-1 text-sm text-amber-500 hover:text-amber-400 transition-colors"
         >
           <UserPlus className="w-4 h-4" />
           {t('overtimeRules.assignRule')}
@@ -144,10 +146,10 @@ export function OvertimeRulesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('overtimeRules.title')}</h1>
+        <h1 className="text-2xl font-bold font-display text-white">{t('overtimeRules.title')}</h1>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 transition-all"
         >
           <Plus className="w-4 h-4" />
           {t('overtimeRules.createRule')}
@@ -157,27 +159,27 @@ export function OvertimeRulesPage() {
       {/* Create rule modal */}
       {showCreateForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setShowCreateForm(false)} />
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCreateForm(false)} />
+          <div className="relative bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">{t('overtimeRules.createRule')}</h2>
-              <button onClick={() => setShowCreateForm(false)}>
-                <X className="w-5 h-5 text-gray-400" />
+              <h2 className="text-lg font-semibold text-white">{t('overtimeRules.createRule')}</h2>
+              <button onClick={() => setShowCreateForm(false)} className="text-zinc-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('overtimeRules.ruleName')} *</label>
-                <input {...register('name')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm" />
-                {errors.name && <p className="mt-1 text-sm text-red-600">{t('common.required')}</p>}
+                <label className="block text-sm font-medium text-zinc-300">{t('overtimeRules.ruleName')} *</label>
+                <input {...register('name')} className={inputClasses} />
+                {errors.name && <p className="mt-1 text-sm text-rose-400">{t('common.required')}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('common.description')}</label>
-                <textarea {...register('description')} rows={2} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm" />
+                <label className="block text-sm font-medium text-zinc-300">{t('common.description')}</label>
+                <textarea {...register('description')} rows={2} className={inputClasses} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('overtimeRules.ruleType')} *</label>
-                <select {...register('rule_type')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm">
+                <label className="block text-sm font-medium text-zinc-300">{t('overtimeRules.ruleType')} *</label>
+                <select {...register('rule_type')} className={inputClasses}>
                   <option value="daily_threshold">{t('overtimeRules.dailyThreshold')}</option>
                   <option value="weekly_threshold">{t('overtimeRules.weeklyThreshold')}</option>
                   <option value="custom">{t('overtimeRules.custom')}</option>
@@ -185,23 +187,23 @@ export function OvertimeRulesPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{t('overtimeRules.thresholdMinutes')}</label>
-                  <input type="number" {...register('threshold_minutes')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm" />
+                  <label className="block text-sm font-medium text-zinc-300">{t('overtimeRules.thresholdMinutes')}</label>
+                  <input type="number" {...register('threshold_minutes')} className={inputClasses} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{t('overtimeRules.multiplier')} *</label>
-                  <input type="number" step="0.1" {...register('multiplier')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm" />
+                  <label className="block text-sm font-medium text-zinc-300">{t('overtimeRules.multiplier')} *</label>
+                  <input type="number" step="0.1" {...register('multiplier')} className={inputClasses} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{t('overtimeRules.priority')}</label>
-                  <input type="number" {...register('priority')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm" />
+                  <label className="block text-sm font-medium text-zinc-300">{t('overtimeRules.priority')}</label>
+                  <input type="number" {...register('priority')} className={inputClasses} />
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowCreateForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                <button type="button" onClick={() => setShowCreateForm(false)} className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors">
                   {t('common.cancel')}
                 </button>
-                <button type="submit" disabled={createMutation.isPending} className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50">
+                <button type="submit" disabled={createMutation.isPending} className="px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all">
                   {createMutation.isPending ? t('common.loading') : t('common.create')}
                 </button>
               </div>
@@ -213,21 +215,21 @@ export function OvertimeRulesPage() {
       {/* Assign rule modal */}
       {showAssignForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setShowAssignForm(false)} />
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowAssignForm(false)} />
+          <div className="relative bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">{t('overtimeRules.assignRule')}</h2>
-              <button onClick={() => setShowAssignForm(false)}>
-                <X className="w-5 h-5 text-gray-400" />
+              <h2 className="text-lg font-semibold text-white">{t('overtimeRules.assignRule')}</h2>
+              <button onClick={() => setShowAssignForm(false)} className="text-zinc-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('sessions.employee')} *</label>
+                <label className="block text-sm font-medium text-zinc-300">{t('sessions.employee')} *</label>
                 <select
                   value={assignEmployeeId}
                   onChange={(e) => setAssignEmployeeId(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+                  className={inputClasses}
                 >
                   <option value="">{t('common.select')}...</option>
                   {employees.map((emp) => (
@@ -238,13 +240,13 @@ export function OvertimeRulesPage() {
                 </select>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button onClick={() => setShowAssignForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                <button onClick={() => setShowAssignForm(false)} className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors">
                   {t('common.cancel')}
                 </button>
                 <button
                   onClick={() => assignMutation.mutate()}
                   disabled={!assignEmployeeId || assignMutation.isPending}
-                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all"
                 >
                   {assignMutation.isPending ? t('common.loading') : t('overtimeRules.assignRule')}
                 </button>
@@ -256,7 +258,7 @@ export function OvertimeRulesPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
         </div>
       ) : (
         <DataTable data={rules} columns={columns} searchPlaceholder={`${t('common.search')}...`} />

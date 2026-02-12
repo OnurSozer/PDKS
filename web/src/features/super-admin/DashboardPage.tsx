@@ -45,7 +45,7 @@ export function SuperAdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="text-2xl font-bold font-display text-white mb-6">
         {t('nav.dashboard')}
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

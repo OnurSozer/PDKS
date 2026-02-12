@@ -2,17 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === Base === */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #09090b; /* zinc-950 */
+  color: #fafafa;
 }
 
 @layer base {
   * {
-    border-color: theme('colors.gray.200');
+    border-color: theme('colors.zinc.800');
+  }
+}
+
+/* === Scrollbar (dark) === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #18181b; /* zinc-900 */
+}
+::-webkit-scrollbar-thumb {
+  background: #3f3f46; /* zinc-700 */
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b; /* zinc-600 */
+}
+
+/* === Dark form controls === */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+select {
+  color-scheme: dark;
+}
+
+/* === Component classes === */
+@layer components {
+  .glass-card {
+    @apply bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-xl;
+  }
+
+  .input-dark {
+    @apply bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500
+           focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 focus:outline-none
+           rounded-lg px-3 py-2 text-sm transition-colors;
+  }
+
+  .btn-primary {
+    @apply bg-amber-500 hover:bg-amber-400 text-black font-semibold
+           shadow-lg shadow-amber-500/20 rounded-lg px-4 py-2 text-sm
+           transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700
+           rounded-lg px-4 py-2 text-sm font-medium transition-colors;
   }
 }
