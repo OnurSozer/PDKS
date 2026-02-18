@@ -235,6 +235,11 @@ class AppLocalizations {
   String get sessionDeleted => get('session_deleted');
   String get deleting => get('deleting');
 
+  // ---- Leave day ----
+  String get onLeaveToday => get('on_leave_today');
+  String get onSickLeaveToday => get('on_sick_leave_today');
+  String get cancelLeaveDay => get('cancel_leave_day');
+
   // ---- Profile (new) ----
   String get remainingLeaveShort => get('remaining_leave_short');
   String get thisMonth => get('this_month');
@@ -472,6 +477,11 @@ class AppLocalizations {
     'session_deleted': 'Session deleted',
     'deleting': 'Deleting...',
 
+    // Leave day
+    'on_leave_today': 'You are on leave.',
+    'on_sick_leave_today': 'You are on sick leave.',
+    'cancel_leave_day': 'Cancel leave for this day',
+
     // Profile (new)
     'remaining_leave_short': 'Remaining Leave',
     'this_month': 'This Month',
@@ -699,6 +709,11 @@ class AppLocalizations {
     'delete_session_confirm': 'Bu seansı silmek istediğinizden emin misiniz?',
     'session_deleted': 'Seans silindi',
     'deleting': 'Siliniyor...',
+
+    // Leave day
+    'on_leave_today': 'Bugün izinlisiniz.',
+    'on_sick_leave_today': 'Bugün hastalık iznindesiniz.',
+    'cancel_leave_day': 'Bu günün iznini iptal et',
 
     // Profile (new)
     'remaining_leave_short': 'Kalan İzin',

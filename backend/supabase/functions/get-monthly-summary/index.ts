@@ -124,6 +124,36 @@ serve(async (req) => {
       specialDayTypeMap.set(sdt.id, sdt);
     }
 
+    // Fetch leave records for all employees in this month with leave type name
+    const leaveTypeMap = new Map<string, string>();
+    try {
+      const { data: allLeaveRecords, error: leaveErr } = await supabaseAdmin
+        .from("leave_records")
+        .select("employee_id, start_date, end_date, leave_type_id, leave_types(name)")
+        .in("employee_id", employeeIds)
+        .eq("status", "active")
+        .lte("start_date", lastDay)
+        .gte("end_date", firstDay);
+
+      if (!leaveErr && allLeaveRecords) {
+        for (const lr of allLeaveRecords) {
+          const typeName = (lr.leave_types as any)?.name || "";
+          const lrStart = new Date(`${lr.start_date}T00:00:00`);
+          const lrEnd = new Date(`${lr.end_date}T00:00:00`);
+          const cursor = new Date(lrStart);
+          while (cursor <= lrEnd) {
+            const cursorStr = cursor.toISOString().split("T")[0];
+            if (cursorStr >= firstDay && cursorStr <= lastDay) {
+              leaveTypeMap.set(`${lr.employee_id}|${cursorStr}`, typeName);
+            }
+            cursor.setDate(cursor.getDate() + 1);
+          }
+        }
+      }
+    } catch (_) {
+      // Non-critical — leave type names won't be shown but function still works
+    }
+
     // Build per-employee summaries
     const results = [];
 
@@ -221,6 +251,11 @@ serve(async (req) => {
           dayIsAbsent = summary.is_absent || false;
           dayIsLeave = summary.is_leave || false;
           dayDeficit = summary.deficit_minutes || 0;
+
+          // Employee is not expected to work on leave days
+          if (dayIsLeave) {
+            expectedMinutes = 0;
+          }
           dayStatus = summary.status || "";
           effectiveMinutes = summary.effective_work_minutes || summary.total_work_minutes || 0;
           daySpecialDayTypeId = summary.special_day_type_id || null;
@@ -293,6 +328,7 @@ serve(async (req) => {
           is_late: dayIsLate,
           is_absent: dayIsAbsent,
           is_leave: dayIsLeave,
+          leave_type_name: dayIsLeave ? (leaveTypeMap.get(`${employee.id}|${dateStr}`) || null) : null,
           deficit_minutes: dayDeficit,
           status: dayStatus,
           special_day_type_id: daySpecialDayTypeId,

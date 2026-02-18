@@ -145,6 +145,8 @@ serve(async (req) => {
     if (leaveRecords && leaveRecords.length > 0) {
       isLeave = true;
       status = "leave";
+      // Employee is not expected to work on leave days
+      expectedWorkMinutes = 0;
     }
 
     const isAbsent = status === "absent" && !isLeave;

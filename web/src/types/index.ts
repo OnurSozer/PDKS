@@ -280,6 +280,7 @@ export interface MonthlyDayDetail {
   is_late: boolean;
   is_absent: boolean;
   is_leave: boolean;
+  leave_type_name?: string | null;
   deficit_minutes: number;
   status: string;
   special_day_type_id?: string | null;

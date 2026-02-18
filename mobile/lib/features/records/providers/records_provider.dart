@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../home/repositories/session_repository.dart';
 import '../../home/providers/session_provider.dart';
+import '../../leave/providers/leave_provider.dart';
 import '../../sessions/providers/session_history_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/utils/date_utils.dart';
@@ -265,16 +266,30 @@ class RecordsNotifier extends StateNotifier<RecordsState> {
             }
           }
 
+          // Build set of leave dates
+          final leaveDates = <String>{};
+          for (final s in summaries) {
+            if ((s['status'] as String?) == 'leave') {
+              leaveDates.add(s['summary_date'] as String);
+            }
+          }
+
           int workDaysInRange = 0;
           int absentCount = 0;
+          int leaveDaysInRange = 0;
           for (var d = monthDate;
               !d.isAfter(cutoffDate);
               d = d.add(const Duration(days: 1))) {
             if (workDayNums.contains(d.weekday)) {
-              workDaysInRange++;
               final dStr = AppDateUtils.formatDate(d);
-              if (!coveredDates.contains(dStr)) {
-                absentCount++;
+              if (leaveDates.contains(dStr)) {
+                // Leave day — don't count toward expected
+                leaveDaysInRange++;
+              } else {
+                workDaysInRange++;
+                if (!coveredDates.contains(dStr)) {
+                  absentCount++;
+                }
               }
             }
           }
@@ -329,6 +344,14 @@ final recordsProvider =
 
   // Reload records when session history changes (manual session create/delete)
   ref.listen<SessionHistoryState>(sessionHistoryProvider, (prev, next) {
+    if (prev == null) return;
+    if (prev.isLoading && !next.isLoading && next.error == null) {
+      notifier.loadRecords();
+    }
+  });
+
+  // Reload records when leave changes (record/cancel leave)
+  ref.listen<LeaveState>(leaveProvider, (prev, next) {
     if (prev == null) return;
     if (prev.isLoading && !next.isLoading && next.error == null) {
       notifier.loadRecords();

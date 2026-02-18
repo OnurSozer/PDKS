@@ -11,22 +11,30 @@ class CalendarLegend extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 16,
+        runSpacing: 8,
         children: [
           _LegendItem(
             color: AppConstants.fullShiftColor,
             label: l10n.fullShift,
           ),
-          const SizedBox(width: 20),
           _LegendItem(
             color: AppConstants.overtimeShiftColor,
             label: l10n.overtimeShift,
           ),
-          const SizedBox(width: 20),
           _LegendItem(
             color: AppConstants.missingShiftColor,
             label: l10n.missing,
+          ),
+          _LegendItem(
+            color: AppConstants.leaveColor,
+            label: l10n.leave,
+          ),
+          _LegendItem(
+            color: AppConstants.sickLeaveColor,
+            label: l10n.sickLeave,
           ),
         ],
       ),

@@ -162,6 +162,8 @@ class CalendarGrid extends StatelessWidget {
         return AppConstants.missingShiftColor;
       case 'leave':
         return AppConstants.leaveColor;
+      case 'sick_leave':
+        return AppConstants.sickLeaveColor;
       default:
         return AppConstants.textMuted;
     }

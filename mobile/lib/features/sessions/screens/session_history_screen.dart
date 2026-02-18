@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../leave/providers/leave_provider.dart';
 import '../providers/session_history_provider.dart';
 import '../widgets/month_pill_bar.dart';
@@ -198,10 +200,13 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
       builder: (ctx) => Consumer(
         builder: (ctx, ref, _) {
           final state = ref.watch(sessionHistoryProvider);
+          final isLeaveDay = state.dailySummary?['status'] == 'leave';
+          final dateStr = AppDateUtils.formatDate(date);
           return DayBottomSheet(
             date: date,
             dailySummary: state.dailySummary,
             sessions: state.sessions,
+            leaveTypeName: state.leaveTypeByDate[dateStr],
             onAddSession: () {
               Navigator.of(ctx).pop();
               _showManualSessionDialog(date);
@@ -210,6 +215,12 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
               Navigator.of(ctx).pop();
               _showLeaveTypeSelection(date);
             },
+            onCancelLeave: isLeaveDay
+                ? () {
+                    Navigator.of(ctx).pop();
+                    _confirmCancelLeave(date);
+                  }
+                : null,
             onEditSession: (session) {
               Navigator.of(ctx).pop();
               _showEditSessionDialog(session, date);
@@ -222,6 +233,96 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
         },
       ),
     );
+  }
+
+  // ---- Cancel Leave ----
+
+  void _confirmCancelLeave(DateTime date) {
+    final l10n = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppConstants.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          l10n.cancelLeave,
+          style: const TextStyle(color: AppConstants.textPrimary, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          l10n.cancelLeaveConfirm,
+          style: const TextStyle(color: AppConstants.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _doCancelLeave(date);
+            },
+            child: Text(l10n.confirm, style: const TextStyle(color: AppConstants.errorColor)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _doCancelLeave(DateTime date) async {
+    final l10n = AppLocalizations.of(context);
+    final dateStr = AppDateUtils.formatDate(date);
+
+    try {
+      // Find the active leave record that covers this date
+      final userId = ref.read(authProvider).profile?.id;
+      if (userId == null) return;
+
+      final result = await SupabaseService.client
+          .from('leave_records')
+          .select('id')
+          .eq('employee_id', userId)
+          .eq('status', 'active')
+          .lte('start_date', dateStr)
+          .gte('end_date', dateStr)
+          .limit(1)
+          .maybeSingle();
+
+      if (result == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.error)),
+          );
+        }
+        return;
+      }
+
+      final leaveRecordId = result['id'] as String;
+      final success = await ref.read(leaveProvider.notifier).cancelLeave(leaveRecordId);
+
+      if (mounted && success) {
+        // Refresh calendar data
+        final notifier = ref.read(sessionHistoryProvider.notifier);
+        notifier.loadSessionsForDate(date);
+        notifier.loadMonthStatuses(
+          ref.read(sessionHistoryProvider).selectedYear,
+          ref.read(sessionHistoryProvider).selectedMonth,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.success),
+            backgroundColor: AppConstants.onTimeColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: AppConstants.errorColor),
+        );
+      }
+    }
   }
 
   // ---- Manual Session Dialog ----

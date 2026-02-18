@@ -420,7 +420,12 @@ export function MonthlySummaryPage() {
                                       </td>
                                       <td className="px-2 py-1 text-center">
                                         {day.is_leave ? (
-                                          <span className="text-blue-400">{t('monthlySummary.statusLeave')}</span>
+                                          <span className="text-blue-400">
+                                            {t('monthlySummary.statusLeave')}
+                                            {day.leave_type_name && (
+                                              <span className="ml-1 text-blue-300">({day.leave_type_name})</span>
+                                            )}
+                                          </span>
                                         ) : day.is_absent ? (
                                           <span className="text-rose-400">{t('monthlySummary.statusAbsent')}</span>
                                         ) : day.is_late ? (

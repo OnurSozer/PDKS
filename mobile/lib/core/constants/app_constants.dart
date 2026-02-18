@@ -20,6 +20,7 @@ class AppConstants {
   static const Color mealReadyColor = Color(0xFFF59E0B);  // amber-500
   static const Color overtimeColor = Color(0xFF8B5CF6);   // violet-500
   static const Color leaveColor = Color(0xFF0EA5E9);      // sky-500
+  static const Color sickLeaveColor = Color(0xFFEF4444);  // red-500
   static const Color errorColor = Color(0xFFEF4444);      // red-500
   static const Color warningColor = Color(0xFFF59E0B);    // amber-500
   static const Color onTimeColor = Color(0xFF10B981);     // green

@@ -7,8 +7,10 @@ class DayBottomSheet extends StatelessWidget {
   final DateTime date;
   final Map<String, dynamic>? dailySummary;
   final List<Map<String, dynamic>> sessions;
+  final String? leaveTypeName;
   final VoidCallback? onAddSession;
   final VoidCallback? onMarkLeaveDay;
+  final VoidCallback? onCancelLeave;
   final void Function(Map<String, dynamic>)? onEditSession;
   final void Function(Map<String, dynamic>)? onDeleteSession;
 
@@ -17,8 +19,10 @@ class DayBottomSheet extends StatelessWidget {
     required this.date,
     this.dailySummary,
     this.sessions = const [],
+    this.leaveTypeName,
     this.onAddSession,
     this.onMarkLeaveDay,
+    this.onCancelLeave,
     this.onEditSession,
     this.onDeleteSession,
   });
@@ -103,8 +107,55 @@ class DayBottomSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
+          // Leave day — show leave message and cancel button only
+          if (status == 'leave') ...[
+            Builder(builder: (_) {
+              final lowerName = (leaveTypeName ?? '').toLowerCase();
+              final isSick = lowerName.contains('hastalık') || lowerName.contains('sick');
+              final leaveIcon = isSick ? Icons.local_hospital : Icons.beach_access;
+              final leaveClr = isSick ? AppConstants.sickLeaveColor : AppConstants.leaveColor;
+              final leaveMsg = isSick ? l10n.onSickLeaveToday : l10n.onLeaveToday;
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: leaveClr.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: leaveClr.withValues(alpha: 0.25)),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(leaveIcon, color: leaveClr, size: 40),
+                      const SizedBox(height: 12),
+                      Text(
+                        leaveMsg,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: leaveClr,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+            if (onCancelLeave != null) ...[
+              const SizedBox(height: 16),
+              _ActionCard(
+                icon: Icons.cancel_outlined,
+                iconBgColor: AppConstants.errorColor,
+                title: l10n.cancelLeave,
+                subtitle: l10n.cancelLeaveDay,
+                borderColor: AppConstants.errorColor,
+                onTap: onCancelLeave!,
+              ),
+            ],
+          ]
           // Summary info (only if sessions exist)
-          if (hasSessions || dailySummary != null) ...[
+          else if (hasSessions || dailySummary != null) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
@@ -291,8 +342,8 @@ class DayBottomSheet extends StatelessWidget {
             const SizedBox(height: 8),
           ],
 
-          // Action cards — large card-style like reference
-          if (onAddSession != null || onMarkLeaveDay != null) ...[
+          // Action cards — large card-style like reference (hide when on leave)
+          if (status != 'leave' && (onAddSession != null || onMarkLeaveDay != null)) ...[
             if (onAddSession != null)
               _ActionCard(
                 icon: Icons.add_circle_outline,

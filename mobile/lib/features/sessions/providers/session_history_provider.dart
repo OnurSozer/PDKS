@@ -19,7 +19,8 @@ class SessionHistoryState {
   final int selectedMonth;
   final List<Map<String, dynamic>> sessions;
   final Map<String, dynamic>? dailySummary;
-  final Map<String, String> monthDayStatuses; // "yyyy-MM-dd" -> "full"|"overtime"|"missing"|"leave"
+  final Map<String, String> monthDayStatuses; // "yyyy-MM-dd" -> "full"|"overtime"|"missing"|"leave"|"sick_leave"
+  final Map<String, String> leaveTypeByDate; // "yyyy-MM-dd" -> leave type name
   final String? error;
 
   SessionHistoryState({
@@ -30,6 +31,7 @@ class SessionHistoryState {
     this.sessions = const [],
     this.dailySummary,
     this.monthDayStatuses = const {},
+    this.leaveTypeByDate = const {},
     this.error,
   })  : selectedDate = selectedDate ?? DateTime.now(),
         selectedYear = selectedYear ?? DateTime.now().year,
@@ -44,6 +46,7 @@ class SessionHistoryState {
     Map<String, dynamic>? dailySummary,
     bool clearDailySummary = false,
     Map<String, String>? monthDayStatuses,
+    Map<String, String>? leaveTypeByDate,
     String? error,
   }) {
     return SessionHistoryState(
@@ -54,6 +57,7 @@ class SessionHistoryState {
       sessions: sessions ?? this.sessions,
       dailySummary: clearDailySummary ? null : (dailySummary ?? this.dailySummary),
       monthDayStatuses: monthDayStatuses ?? this.monthDayStatuses,
+      leaveTypeByDate: leaveTypeByDate ?? this.leaveTypeByDate,
       error: error,
     );
   }
@@ -243,6 +247,38 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
         }
       }
 
+      // Fetch leave records for the month to identify leave types
+      final leaveTypeByDate = <String, String>{};
+      try {
+        final leaveRecords = await SupabaseService.client
+            .from('leave_records')
+            .select('start_date, end_date, leave_type:leave_types(name)')
+            .eq('employee_id', _employeeId!)
+            .eq('status', 'active')
+            .lte('start_date', endStr)
+            .gte('end_date', startStr);
+
+        for (final lr in leaveRecords) {
+          final leaveType = lr['leave_type'] as Map<String, dynamic>?;
+          final typeName = leaveType?['name'] as String? ?? '';
+          final lrStart = lr['start_date'] as String;
+          final lrEnd = lr['end_date'] as String;
+
+          // Fill each date in the leave range that falls within the month
+          var cursor = DateTime.parse(lrStart);
+          final rangeEnd = DateTime.parse(lrEnd);
+          while (!cursor.isAfter(rangeEnd)) {
+            final cursorStr = AppDateUtils.formatDate(cursor);
+            if (cursorStr.compareTo(startStr) >= 0 && cursorStr.compareTo(endStr) <= 0) {
+              leaveTypeByDate[cursorStr] = typeName;
+            }
+            cursor = cursor.add(const Duration(days: 1));
+          }
+        }
+      } catch (_) {
+        // Non-critical — fall back to no leave type differentiation
+      }
+
       final statuses = <String, String>{};
       for (final s in summaries) {
         final dateStr = s['summary_date'] as String;
@@ -263,7 +299,13 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
         }
 
         if (dayStatus == 'leave') {
-          statuses[dateStr] = 'leave';
+          // Check if it's sick leave
+          final leaveTypeName = leaveTypeByDate[dateStr]?.toLowerCase() ?? '';
+          if (leaveTypeName.contains('hastalık') || leaveTypeName.contains('sick')) {
+            statuses[dateStr] = 'sick_leave';
+          } else {
+            statuses[dateStr] = 'leave';
+          }
         } else if (overtime > 0) {
           statuses[dateStr] = 'overtime';
         } else if (totalWork > 0 && totalWork >= expected) {
@@ -272,7 +314,10 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
           statuses[dateStr] = 'missing';
         }
       }
-      state = state.copyWith(monthDayStatuses: statuses);
+      state = state.copyWith(
+        monthDayStatuses: statuses,
+        leaveTypeByDate: leaveTypeByDate,
+      );
     } catch (_) {
       // Silently fail — statuses are visual only
     }
