@@ -9,7 +9,7 @@ import { DataTable } from '../../components/shared/DataTable';
 import { DateRangePicker } from '../../components/shared/DateRangePicker';
 import { EditSessionModal } from './EditSessionModal';
 import { formatMinutes } from '../../lib/utils';
-import { format, subDays } from 'date-fns';
+import { format, startOfMonth } from 'date-fns';
 import { Pencil } from 'lucide-react';
 
 export function SessionsPage() {
@@ -17,18 +17,23 @@ export function SessionsPage() {
   const { profile } = useAuth();
   const companyId = profile?.company_id || undefined;
 
-  const [startDate, setStartDate] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [employeeFilter, setEmployeeFilter] = useState('');
+  const [showCancelled, setShowCancelled] = useState(false);
   const [editSession, setEditSession] = useState<WorkSession | null>(null);
 
   const { data: employees = [] } = useEmployees(companyId);
-  const { data: sessions = [], isLoading } = useSessions({
+  const { data: allSessions = [], isLoading } = useSessions({
     companyId,
     employeeId: employeeFilter || undefined,
     startDate,
     endDate,
   });
+
+  const sessions = showCancelled
+    ? allSessions
+    : allSessions.filter((s) => s.status !== 'cancelled');
 
   const columns: ColumnDef<WorkSession, any>[] = [
     {
@@ -146,6 +151,15 @@ export function SessionsPage() {
             ))}
           </select>
         </div>
+        <label className="flex items-center gap-2 cursor-pointer pb-0.5">
+          <input
+            type="checkbox"
+            checked={showCancelled}
+            onChange={(e) => setShowCancelled(e.target.checked)}
+            className="w-4 h-4 text-amber-500 bg-zinc-800 border-zinc-600 rounded focus:ring-amber-500/20"
+          />
+          <span className="text-sm text-zinc-300">{t('sessions.showCancelled')}</span>
+        </label>
       </div>
 
       {isLoading ? (

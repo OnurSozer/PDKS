@@ -35,6 +35,7 @@
     "holidays": "Tatiller",
     "reports": "Raporlar",
     "monthlySummary": "Aylık Özet",
+    "activityLog": "Aktivite Günlüğü",
     "settings": "Ayarlar"
   },
   "common": {
@@ -145,7 +146,8 @@
     "statusCancelled": "İptal Edildi",
     "employee": "Çalışan",
     "dateRange": "Tarih Aralığı",
-    "sessionEdited": "Oturum başarıyla düzenlendi"
+    "sessionEdited": "Oturum başarıyla düzenlendi",
+    "showCancelled": "İptal edilen oturumları göster"
   },
   "schedules": {
     "title": "Vardiyalar",
@@ -312,6 +314,32 @@
     "assignTypes": "Tür Ata",
     "noTypes": "Tanımlanmış özel gün türü yok",
     "effectiveMinutes": "Etkin: {{minutes}} dk"
+  },
+  "activityLog": {
+    "title": "Aktivite Günlüğü",
+    "allEmployees": "Tüm Çalışanlar",
+    "allActions": "Tüm İşlemler",
+    "startDate": "Başlangıç Tarihi",
+    "endDate": "Bitiş Tarihi",
+    "dateTime": "Tarih/Saat",
+    "employee": "Çalışan",
+    "action": "İşlem",
+    "details": "Detaylar",
+    "performedBy": "Yapan Kişi",
+    "noLogs": "Aktivite günlüğü bulunamadı",
+    "clock_in": "Giriş",
+    "clock_out": "Çıkış",
+    "session_create": "Oturum Oluştur",
+    "session_update": "Oturum Düzenle",
+    "session_delete": "Oturum Sil",
+    "leave_record": "İzin Kaydet",
+    "leave_cancel": "İzin İptal",
+    "boss_call_on": "Patron Çağırdı Aç",
+    "boss_call_off": "Patron Çağırdı Kapat",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "page": "Sayfa",
+    "submittedBy": "Yapan"
   },
   "days": {
     "monday": "Pazartesi",

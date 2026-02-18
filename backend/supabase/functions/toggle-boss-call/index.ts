@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getSupabaseClient, getSupabaseAdmin } from "../_shared/supabase-client.ts";
 import { getAuthUser, requireRole } from "../_shared/auth.ts";
+import { logActivity } from "../_shared/activity-log.ts";
 
 /**
  * Thin wrapper: looks up company's boss_call special day type,
@@ -51,6 +52,16 @@ serve(async (req) => {
         .single();
 
       if (updateError) throw new Error(`Failed to update daily summary: ${updateError.message}`);
+
+      logActivity(supabaseAdmin, {
+        company_id: summary.company_id,
+        employee_id: employee_id,
+        performed_by: user.id,
+        action_type: "boss_call_off",
+        resource_type: "daily_summary",
+        resource_id: summary.id,
+        details: { date, effective_work_minutes: updated.effective_work_minutes },
+      });
 
       return new Response(JSON.stringify({ summary: updated }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -109,6 +120,16 @@ serve(async (req) => {
       .single();
 
     if (updateError) throw new Error(`Failed to update daily summary: ${updateError.message}`);
+
+    logActivity(supabaseAdmin, {
+      company_id: summary.company_id,
+      employee_id: employee_id,
+      performed_by: user.id,
+      action_type: "boss_call_on",
+      resource_type: "daily_summary",
+      resource_id: summary.id,
+      details: { date, effective_work_minutes: updated.effective_work_minutes },
+    });
 
     return new Response(JSON.stringify({ summary: updated }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

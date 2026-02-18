@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getSupabaseAdmin, getSupabaseClient } from "../_shared/supabase-client.ts";
 import { getAuthUser, requireRole } from "../_shared/auth.ts";
+import { logActivity } from "../_shared/activity-log.ts";
 
 /**
  * Record leave for an employee (self-service, no approval needed).
@@ -119,6 +120,16 @@ serve(async (req) => {
       await supabaseAdmin.from("leave_records").delete().eq("id", leaveRecord.id);
       throw new Error(`Failed to update leave balance: ${updateBalanceError.message}`);
     }
+
+    logActivity(supabaseAdmin, {
+      company_id: user.company_id,
+      employee_id: user.id,
+      performed_by: user.id,
+      action_type: "leave_record",
+      resource_type: "leave_record",
+      resource_id: leaveRecord.id,
+      details: { start_date, end_date, total_days: totalDays, leave_type: leaveType.name },
+    });
 
     // 3. Update daily_summaries for each day in the leave period
     const current = new Date(start_date);

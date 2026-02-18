@@ -35,6 +35,7 @@
     "holidays": "Holidays",
     "reports": "Reports",
     "monthlySummary": "Monthly Summary",
+    "activityLog": "Activity Log",
     "settings": "Settings"
   },
   "common": {
@@ -145,7 +146,8 @@
     "statusCancelled": "Cancelled",
     "employee": "Employee",
     "dateRange": "Date Range",
-    "sessionEdited": "Session updated successfully"
+    "sessionEdited": "Session updated successfully",
+    "showCancelled": "Show cancelled sessions"
   },
   "schedules": {
     "title": "Schedules",
@@ -312,6 +314,32 @@
     "assignTypes": "Assign Types",
     "noTypes": "No special day types defined",
     "effectiveMinutes": "Effective: {{minutes}} min"
+  },
+  "activityLog": {
+    "title": "Activity Log",
+    "allEmployees": "All Employees",
+    "allActions": "All Actions",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "dateTime": "Date/Time",
+    "employee": "Employee",
+    "action": "Action",
+    "details": "Details",
+    "performedBy": "Performed By",
+    "noLogs": "No activity logs found",
+    "clock_in": "Clock In",
+    "clock_out": "Clock Out",
+    "session_create": "Create Session",
+    "session_update": "Edit Session",
+    "session_delete": "Delete Session",
+    "leave_record": "Record Leave",
+    "leave_cancel": "Cancel Leave",
+    "boss_call_on": "Boss Call On",
+    "boss_call_off": "Boss Call Off",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "submittedBy": "Submitted by"
   },
   "days": {
     "monday": "Monday",

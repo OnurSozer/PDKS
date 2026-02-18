@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getSupabaseClient, getSupabaseAdmin } from "../_shared/supabase-client.ts";
 import { getAuthUser, requireRole } from "../_shared/auth.ts";
+import { logActivity } from "../_shared/activity-log.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -79,6 +80,16 @@ async function handleCreate(
     .single();
 
   if (insertError) throw new Error(`Failed to create session: ${insertError.message}`);
+
+  logActivity(supabaseAdmin, {
+    company_id: user.company_id!,
+    employee_id: user.id,
+    performed_by: user.id,
+    action_type: "session_create",
+    resource_type: "work_session",
+    resource_id: session.id,
+    details: { session_date, clock_in, clock_out },
+  });
 
   // Trigger calculate-session (computes regular/overtime, chains to recalculate-daily-summary)
   const calcResponse = await fetch(
@@ -165,6 +176,21 @@ async function handleUpdate(
 
   if (updateError) throw new Error(`Failed to update session: ${updateError.message}`);
 
+  logActivity(supabaseAdmin, {
+    company_id: user.company_id!,
+    employee_id: user.id,
+    performed_by: user.id,
+    action_type: "session_update",
+    resource_type: "work_session",
+    resource_id: session_id,
+    details: {
+      old_clock_in: session.clock_in,
+      old_clock_out: session.clock_out,
+      new_clock_in: clock_in,
+      new_clock_out: clock_out,
+    },
+  });
+
   // Trigger calculate-session (recomputes regular/overtime, chains to recalculate-daily-summary)
   const calcResponse = await fetch(
     `${Deno.env.get("SUPABASE_URL")}/functions/v1/calculate-session`,
@@ -237,6 +263,16 @@ async function handleDelete(
     .eq("id", session_id);
 
   if (updateError) throw new Error(`Failed to cancel session: ${updateError.message}`);
+
+  logActivity(supabaseAdmin, {
+    company_id: user.company_id!,
+    employee_id: user.id,
+    performed_by: user.id,
+    action_type: "session_delete",
+    resource_type: "work_session",
+    resource_id: session_id,
+    details: { session_date: session.session_date },
+  });
 
   // Trigger recalculate-daily-summary (recomputes the day without cancelled session)
   const summaryResponse = await fetch(

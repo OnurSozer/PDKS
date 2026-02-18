@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getSupabaseAdmin, getSupabaseClient } from "../_shared/supabase-client.ts";
 import { getAuthUser, requireRole } from "../_shared/auth.ts";
+import { logActivity } from "../_shared/activity-log.ts";
 
 /**
  * Cancel a leave record. Reverses the leave_balances.used_days update
@@ -56,6 +57,16 @@ serve(async (req) => {
       .single();
 
     if (cancelError) throw new Error(`Failed to cancel leave record: ${cancelError.message}`);
+
+    logActivity(supabaseAdmin, {
+      company_id: leaveRecord.company_id,
+      employee_id: leaveRecord.employee_id,
+      performed_by: user.id,
+      action_type: "leave_cancel",
+      resource_type: "leave_record",
+      resource_id: leave_record_id,
+      details: { start_date: leaveRecord.start_date, end_date: leaveRecord.end_date, total_days: leaveRecord.total_days },
+    });
 
     // 2. Reverse the balance update
     const currentYear = new Date(leaveRecord.start_date).getFullYear();

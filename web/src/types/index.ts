@@ -287,6 +287,21 @@ export interface MonthlyDayDetail {
   special_day_type_code?: string | null;
 }
 
+export interface ActivityLog {
+  id: string;
+  company_id: string;
+  employee_id: string;
+  performed_by: string;
+  action_type: string;
+  resource_type: string;
+  resource_id?: string;
+  details: Record<string, any>;
+  created_at: string;
+  // Joined
+  employee?: Profile;
+  performer?: Profile;
+}
+
 // Auth types
 export interface AuthUser {
   id: string;

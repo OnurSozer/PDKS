@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { getSupabaseClient } from "../_shared/supabase-client.ts";
+import { getSupabaseClient, getSupabaseAdmin } from "../_shared/supabase-client.ts";
 import { getAuthUser, requireRole } from "../_shared/auth.ts";
+import { logActivity } from "../_shared/activity-log.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -45,6 +46,16 @@ serve(async (req) => {
       .single();
 
     if (insertError) throw new Error(`Failed to create session: ${insertError.message}`);
+
+    logActivity(getSupabaseAdmin(), {
+      company_id: user.company_id,
+      employee_id: user.id,
+      performed_by: user.id,
+      action_type: "clock_in",
+      resource_type: "work_session",
+      resource_id: session.id,
+      details: { clock_in: now.toISOString(), session_date: sessionDate },
+    });
 
     return new Response(
       JSON.stringify({ session }),

@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { getSupabaseClient } from "../_shared/supabase-client.ts";
+import { getSupabaseClient, getSupabaseAdmin } from "../_shared/supabase-client.ts";
 import { getAuthUser, requireRole } from "../_shared/auth.ts";
+import { logActivity } from "../_shared/activity-log.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -49,6 +50,16 @@ serve(async (req) => {
       .single();
 
     if (updateError) throw new Error(`Failed to clock out: ${updateError.message}`);
+
+    logActivity(getSupabaseAdmin(), {
+      company_id: session.company_id,
+      employee_id: session.employee_id,
+      performed_by: user.id,
+      action_type: "clock_out",
+      resource_type: "work_session",
+      resource_id: session_id,
+      details: { clock_out: now.toISOString(), submitted_by: submittedBy },
+    });
 
     // Trigger calculate-session via internal call
     const calcResponse = await fetch(
