@@ -19,10 +19,12 @@ serve(async (req) => {
 
     if (action === "create") {
       return await handleCreate(body, user, supabase);
+    } else if (action === "update") {
+      return await handleUpdate(body, user, supabase);
     } else if (action === "delete") {
       return await handleDelete(body, user, supabase);
     } else {
-      throw new Error("Invalid action. Must be 'create' or 'delete'.");
+      throw new Error("Invalid action. Must be 'create', 'update', or 'delete'.");
     }
   } catch (error) {
     const msg = (error as Error).message;
@@ -100,6 +102,91 @@ async function handleCreate(
     .from("work_sessions")
     .select("*")
     .eq("id", session.id)
+    .single();
+
+  return new Response(
+    JSON.stringify({ session: finalSession || session }),
+    {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    }
+  );
+}
+
+async function handleUpdate(
+  body: any,
+  user: { id: string; company_id: string | null },
+  supabase: any
+) {
+  const { session_id, clock_in, clock_out } = body;
+
+  if (!session_id) {
+    throw new Error("session_id is required");
+  }
+
+  if (!clock_in || !clock_out) {
+    throw new Error("clock_in and clock_out are required");
+  }
+
+  const clockInDate = new Date(clock_in);
+  const clockOutDate = new Date(clock_out);
+
+  if (clockOutDate <= clockInDate) {
+    throw new Error("clock_out must be after clock_in");
+  }
+
+  // Fetch session via user client (RLS enforces ownership)
+  const { data: session, error: fetchError } = await supabase
+    .from("work_sessions")
+    .select("*")
+    .eq("id", session_id)
+    .single();
+
+  if (fetchError || !session) throw new Error("Session not found");
+
+  if (session.employee_id !== user.id) {
+    throw new Error("Forbidden: you can only edit your own sessions");
+  }
+
+  if (!["completed", "edited"].includes(session.status)) {
+    throw new Error("Session cannot be edited (status: " + session.status + ")");
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { error: updateError } = await supabaseAdmin
+    .from("work_sessions")
+    .update({
+      clock_in,
+      clock_out,
+      status: "edited",
+    })
+    .eq("id", session_id);
+
+  if (updateError) throw new Error(`Failed to update session: ${updateError.message}`);
+
+  // Trigger calculate-session (recomputes regular/overtime, chains to recalculate-daily-summary)
+  const calcResponse = await fetch(
+    `${Deno.env.get("SUPABASE_URL")}/functions/v1/calculate-session`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ session_id }),
+    }
+  );
+
+  if (!calcResponse.ok) {
+    console.error("Failed to trigger calculate-session:", await calcResponse.text());
+  }
+
+  // Re-fetch after calculation
+  const { data: finalSession } = await supabaseAdmin
+    .from("work_sessions")
+    .select("*")
+    .eq("id", session_id)
     .single();
 
   return new Response(

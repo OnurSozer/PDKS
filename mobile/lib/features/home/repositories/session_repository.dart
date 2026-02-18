@@ -146,6 +146,24 @@ class SessionRepository {
     return Map<String, dynamic>.from(data['session'] as Map);
   }
 
+  Future<Map<String, dynamic>> updateSession({
+    required String sessionId,
+    required String clockIn,
+    required String clockOut,
+  }) async {
+    final response = await _client.functions.invoke(
+      'manage-manual-session',
+      body: {
+        'action': 'update',
+        'session_id': sessionId,
+        'clock_in': clockIn,
+        'clock_out': clockOut,
+      },
+    );
+    final data = _parseResponse(response.data);
+    return Map<String, dynamic>.from(data['session'] as Map);
+  }
+
   Future<void> deleteSession(String sessionId) async {
     await _client.functions.invoke(
       'manage-manual-session',

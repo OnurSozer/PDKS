@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_utils.dart';
@@ -211,16 +210,13 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
               Navigator.of(ctx).pop();
               _showLeaveTypeSelection(date);
             },
-            onDeleteSession: (session) {
-              Navigator.of(ctx).pop(); // Close bottom sheet first
-              _confirmDeleteSession(session, date);
-            },
-            onSessionTap: (session) {
+            onEditSession: (session) {
               Navigator.of(ctx).pop();
-              context.push(
-                '/calendar/${session['id']}',
-                extra: session,
-              );
+              _showEditSessionDialog(session, date);
+            },
+            onDeleteSession: (session) {
+              Navigator.of(ctx).pop();
+              _confirmDeleteSession(session, date);
             },
           );
         },
@@ -358,6 +354,139 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
         },
       ),
     );
+  }
+
+  void _showEditSessionDialog(Map<String, dynamic> session, DateTime date) {
+    final clockIn = DateTime.parse(session['clock_in'] as String);
+    final clockOutRaw = session['clock_out'] as String?;
+    final clockOut = clockOutRaw != null ? DateTime.parse(clockOutRaw) : null;
+
+    TimeOfDay startTime = TimeOfDay(hour: clockIn.hour, minute: clockIn.minute);
+    TimeOfDay endTime = clockOut != null
+        ? TimeOfDay(hour: clockOut.hour, minute: clockOut.minute)
+        : const TimeOfDay(hour: 18, minute: 0);
+
+    final l10n = AppLocalizations.of(context);
+    final sessionId = session['id'] as String;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (builderContext, setState) {
+          return AlertDialog(
+            backgroundColor: AppConstants.cardColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(
+              l10n.editSession,
+              style: const TextStyle(color: AppConstants.textPrimary, fontWeight: FontWeight.w700),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppConstants.primaryColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, color: AppConstants.primaryColor, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        AppDateUtils.formatDisplayDate(date),
+                        style: const TextStyle(
+                          color: AppConstants.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildTimePickerRow(
+                  context: builderContext,
+                  icon: Icons.login,
+                  iconColor: AppConstants.clockInColor,
+                  label: l10n.entryTime,
+                  time: startTime,
+                  onPicked: (picked) => setState(() => startTime = picked),
+                ),
+                const SizedBox(height: 12),
+                _buildTimePickerRow(
+                  context: builderContext,
+                  icon: Icons.logout,
+                  iconColor: AppConstants.clockOutColor,
+                  label: l10n.exitTime,
+                  time: endTime,
+                  onPicked: (picked) => setState(() => endTime = picked),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(l10n.cancel, style: const TextStyle(color: AppConstants.textSecondary)),
+              ),
+              TextButton(
+                onPressed: () => _submitEditSession(
+                  dialogContext,
+                  sessionId,
+                  date,
+                  startTime,
+                  endTime,
+                ),
+                child: Text(
+                  l10n.save,
+                  style: const TextStyle(
+                    color: AppConstants.primaryColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _submitEditSession(
+    BuildContext dialogContext,
+    String sessionId,
+    DateTime date,
+    TimeOfDay startTime,
+    TimeOfDay endTime,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+
+    Navigator.of(dialogContext).pop();
+
+    _showLoadingDialog(l10n.save);
+
+    try {
+      await ref.read(sessionHistoryProvider.notifier).editSession(
+        sessionId: sessionId,
+        date: date,
+        startHour: startTime.hour,
+        startMinute: startTime.minute,
+        endHour: endTime.hour,
+        endMinute: endTime.minute,
+      );
+
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _showSuccessDialog(l10n.success, l10n.sessionEdited);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        final errorMsg = e.toString().contains('exit_before_entry')
+            ? l10n.exitBeforeEntry
+            : e.toString().replaceAll('Exception: ', '');
+        _showErrorDialog(l10n.error, errorMsg);
+      }
+    }
   }
 
   Widget _buildTimePickerRow({

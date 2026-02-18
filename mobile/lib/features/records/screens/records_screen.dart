@@ -186,114 +186,161 @@ class _GradientSummaryCard extends StatelessWidget {
     final worked = state.totalWorkedMinutes;
     final hours = worked ~/ 60;
     final minutes = worked % 60;
-    final pct = state.completionPercentage;
+    final netMin = state.netMinutes;
+    final isExtra = netMin >= 0;
+    final diffLabel = isExtra ? l10n.extra : l10n.missing;
+    // Extra: OT% formula (with multiplier)
+    // Deficit: deficit days / constant * 100 (no multiplier)
+    final displayPct = isExtra
+        ? state.overtimePercentage
+        : (state.expectedDailyMinutes > 0 && state.monthlyConstant > 0)
+            ? (netMin.abs() / state.expectedDailyMinutes / state.monthlyConstant) * 100
+            : 0.0;
+    final deviationStr = '${isExtra ? '+' : '-'}${displayPct.toStringAsFixed(2)}%';
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF59E0B),
-            Color(0xFF92400E),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.work_history_outlined, color: Colors.white.withValues(alpha: 0.8), size: 20),
-              const SizedBox(width: 8),
-              Text(
-                l10n.monthlyWork,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
+    return IntrinsicHeight(
+      child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Left card: Aylık Çalışma
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFF59E0B), Color(0xFF92400E)],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '$hours',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        TextSpan(
-                          text: l10n.hoursAbbrev,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const TextSpan(text: ' '),
-                        TextSpan(
-                          text: '$minutes',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        TextSpan(
-                          text: l10n.minutesAbbrev,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.work_history_outlined, color: Colors.white.withValues(alpha: 0.8), size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      l10n.monthlyWork,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              // Completion badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
+                  ],
                 ),
-                child: Text(
-                  '${pct.round()}%',
+                const SizedBox(height: 12),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '$hours',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      TextSpan(
+                        text: l10n.hoursAbbrev,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const TextSpan(text: ' '),
+                      TextSpan(
+                        text: '$minutes',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      TextSpan(
+                        text: l10n.minutesAbbrev,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Right card: Percentage (extra/missing)
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isExtra
+                    ? [const Color(0xFF10B981), const Color(0xFF065F46)]
+                    : [const Color(0xFFF43F5E), const Color(0xFF9F1239)],
+              ),
+              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: (isExtra ? const Color(0xFF10B981) : const Color(0xFFF43F5E))
+                      .withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isExtra ? Icons.trending_up : Icons.trending_down,
+                      color: Colors.white.withValues(alpha: 0.8),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      diffLabel,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  deviationStr,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
+    ),
     );
   }
 }
@@ -394,11 +441,13 @@ class _StatsGrid extends StatelessWidget {
             Expanded(child: _StatCard(
               icon: Icons.remove_circle_outline,
               iconColor: const Color(0xFFF43F5E),
-              value: AppDateUtils.formatDurationLocalized(
-                state.totalDeficitMinutes,
-                l10n.hoursAbbrev,
-                l10n.minutesAbbrev,
-              ),
+              value: state.totalDeficitMinutes > 0
+                  ? AppDateUtils.formatDurationLocalized(
+                      state.totalDeficitMinutes,
+                      l10n.hoursAbbrev,
+                      l10n.minutesAbbrev,
+                    )
+                  : l10n.none,
               label: l10n.deficitHours,
             )),
             const SizedBox(width: 12),

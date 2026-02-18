@@ -85,10 +85,6 @@ class CalendarGrid extends StatelessWidget {
                     bgColor = AppConstants.primaryColor;
                     borderColor = AppConstants.primaryLight;
                     borderWidth = 2;
-                  } else if (isSelected) {
-                    bgColor = AppConstants.primaryColor.withValues(alpha: 0.15);
-                    borderColor = AppConstants.primaryColor;
-                    borderWidth = 1.5;
                   } else if (status != null) {
                     borderColor = _statusColor(status);
                     borderWidth = 2;
@@ -117,18 +113,16 @@ class CalendarGrid extends StatelessWidget {
                                   '$dayNum',
                                   style: TextStyle(
                                     fontSize: 15,
-                                    fontWeight: isToday || isSelected
+                                    fontWeight: isToday
                                         ? FontWeight.w800
                                         : FontWeight.w600,
                                     color: isFuture
                                         ? AppConstants.textMuted.withValues(alpha: 0.4)
                                         : isToday
                                             ? Colors.white
-                                            : isSelected
-                                                ? AppConstants.primaryColor
-                                                : isWeekend
-                                                    ? AppConstants.textSecondary
-                                                    : AppConstants.textPrimary,
+                                            : isWeekend
+                                                ? AppConstants.textSecondary
+                                                : AppConstants.textPrimary,
                                   ),
                                 ),
                                 if (status != null && !isToday) ...[

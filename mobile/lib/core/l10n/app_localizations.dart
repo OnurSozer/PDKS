@@ -194,6 +194,7 @@ class AppLocalizations {
   String get otDays => get('ot_days');
   String get lateDays => get('late_days');
   String get absentDays => get('absent_days');
+  String get none => get('none');
 
   // ---- Calendar (new) ----
   String get fullShift => get('full_shift');
@@ -227,6 +228,8 @@ class AppLocalizations {
   String get calledByBoss => get('called_by_boss');
   String get overtimeSession => get('overtime_session');
   String get exitBeforeEntry => get('exit_before_entry');
+  String get editSession => get('edit_session');
+  String get sessionEdited => get('session_edited');
   String get deleteSession => get('delete_session');
   String get deleteSessionConfirm => get('delete_session_confirm');
   String get sessionDeleted => get('session_deleted');
@@ -428,6 +431,7 @@ class AppLocalizations {
     'ot_days': 'OT Days',
     'late_days': 'Late Days',
     'absent_days': 'Absent Days',
+    'none': 'None',
 
     // Calendar (new)
     'full_shift': 'Full Shift',
@@ -461,6 +465,8 @@ class AppLocalizations {
     'called_by_boss': 'Called by Boss',
     'overtime_session': 'Overtime',
     'exit_before_entry': 'Exit time cannot be before entry time',
+    'edit_session': 'Edit Session',
+    'session_edited': 'Session updated',
     'delete_session': 'Delete Session',
     'delete_session_confirm': 'Are you sure you want to delete this session?',
     'session_deleted': 'Session deleted',
@@ -653,6 +659,7 @@ class AppLocalizations {
     'ot_days': 'FM Gün',
     'late_days': 'Geç Kalma',
     'absent_days': 'Devamsızlık',
+    'none': 'Yok',
 
     // Calendar (new)
     'full_shift': 'Tam Mesai',
@@ -686,6 +693,8 @@ class AppLocalizations {
     'called_by_boss': 'Patron Çağırdı',
     'overtime_session': 'Ek Mesai',
     'exit_before_entry': 'Çıkış saati giriş saatinden önce olamaz',
+    'edit_session': 'Seansı Düzenle',
+    'session_edited': 'Seans güncellendi',
     'delete_session': 'Seansı Sil',
     'delete_session_confirm': 'Bu seansı silmek istediğinizden emin misiniz?',
     'session_deleted': 'Seans silindi',

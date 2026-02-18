@@ -3,6 +3,7 @@ import '../../home/repositories/session_repository.dart';
 import '../../home/providers/session_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/services/supabase_service.dart';
 
 class _DateCache {
   final List<Map<String, dynamic>> sessions;
@@ -202,17 +203,64 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
     );
     try {
       final monthDate = DateTime(year, month, 1);
+      final endDate = DateTime(year, month + 1, 0);
+      final startStr = AppDateUtils.formatDate(monthDate);
+      final endStr = AppDateUtils.formatDate(endDate);
+
       final summaries = await _repository.getMonthDailySummaries(
         _employeeId!,
         monthDate,
       );
+
+      // Fetch schedule to compute expected per day from live shift data
+      int dailyExpected = 0;
+      Set<int> workDayNums = {};
+
+      final schedule = await SupabaseService.client
+          .from('employee_schedules')
+          .select('*, shift_template:shift_templates(*)')
+          .eq('employee_id', _employeeId!)
+          .lte('effective_from', endStr)
+          .or('effective_to.is.null,effective_to.gte.$startStr')
+          .order('effective_from', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (schedule != null) {
+        final template = schedule['shift_template'] as Map<String, dynamic>?;
+        final workDays = (template?['work_days'] ?? schedule['custom_work_days']) as List<dynamic>?;
+        final startTime = (template?['start_time'] ?? schedule['custom_start_time']) as String?;
+        final endTime = (template?['end_time'] ?? schedule['custom_end_time']) as String?;
+        final breakMinutes = (template?['break_duration_minutes'] ?? schedule['custom_break_duration_minutes'] ?? 0) as int;
+
+        if (workDays != null && startTime != null && endTime != null) {
+          final startParts = startTime.split(':');
+          final endParts = endTime.split(':');
+          final startMin = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+          final endMin = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+          dailyExpected = endMin - startMin - breakMinutes;
+          workDayNums = workDays.map((d) => d is int ? d : int.parse(d.toString())).toSet();
+        }
+      }
+
       final statuses = <String, String>{};
       for (final s in summaries) {
         final dateStr = s['summary_date'] as String;
         final totalWork = s['total_work_minutes'] as int? ?? 0;
-        final expected = s['expected_work_minutes'] as int? ?? 0;
         final overtime = s['total_overtime_minutes'] as int? ?? 0;
         final dayStatus = s['status'] as String? ?? '';
+
+        // Compute expected from schedule, not from stale daily_summaries
+        int expected = 0;
+        if (dailyExpected > 0 && dateStr.length >= 10) {
+          final parts = dateStr.split('-');
+          if (parts.length == 3) {
+            final d = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+            if (workDayNums.contains(d.weekday)) {
+              expected = dailyExpected;
+            }
+          }
+        }
 
         if (dayStatus == 'leave') {
           statuses[dateStr] = 'leave';
@@ -234,6 +282,36 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
     // Pre-fetch the new month's data when user swipes calendar
     _prefetchMonth(month.year, month.month);
     loadMonthStatuses(month.year, month.month);
+  }
+
+  Future<void> editSession({
+    required String sessionId,
+    required DateTime date,
+    required int startHour,
+    required int startMinute,
+    required int endHour,
+    required int endMinute,
+  }) async {
+    if (_employeeId == null) throw Exception('Not authenticated');
+
+    final clockIn = DateTime(date.year, date.month, date.day, startHour, startMinute);
+    final clockOut = DateTime(date.year, date.month, date.day, endHour, endMinute);
+
+    if (clockOut.isBefore(clockIn) || clockOut.isAtSameMomentAs(clockIn)) {
+      throw Exception('exit_before_entry');
+    }
+
+    await _repository.updateSession(
+      sessionId: sessionId,
+      clockIn: clockIn.toIso8601String(),
+      clockOut: clockOut.toIso8601String(),
+    );
+
+    final dateStr = AppDateUtils.formatDate(date);
+    _cache.remove(dateStr);
+
+    await loadSessionsForDate(date);
+    await loadMonthStatuses(state.selectedYear, state.selectedMonth);
   }
 
   Future<void> createManualSession({

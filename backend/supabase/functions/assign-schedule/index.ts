@@ -53,6 +53,14 @@ serve(async (req) => {
 
       if (error) throw new Error(`Failed to update schedule: ${error.message}`);
 
+      // Recalculate affected sessions in background
+      recalculateEmployeeSessions(
+        supabaseAdmin,
+        data.employee_id,
+        data.effective_from,
+        data.effective_to,
+      );
+
       return new Response(
         JSON.stringify({ schedule: data }),
         {
@@ -97,6 +105,13 @@ serve(async (req) => {
         errors.push({ employee_id: empId, error: error.message });
       } else {
         results.push(data);
+        // Recalculate affected sessions in background
+        recalculateEmployeeSessions(
+          supabaseAdmin,
+          empId,
+          newEffectiveFrom,
+          effective_to || null,
+        );
       }
     }
 
@@ -116,3 +131,89 @@ serve(async (req) => {
     });
   }
 });
+
+/**
+ * Recalculate all sessions for an employee within the schedule's date range.
+ * Runs in the background (fire-and-forget) so it doesn't block the response.
+ */
+async function recalculateEmployeeSessions(
+  supabaseAdmin: any,
+  employeeId: string,
+  effectiveFrom: string,
+  effectiveTo: string | null,
+) {
+  try {
+    // Fetch all completed/edited sessions for this employee in the date range
+    let query = supabaseAdmin
+      .from("work_sessions")
+      .select("id, session_date")
+      .eq("employee_id", employeeId)
+      .in("status", ["completed", "edited"])
+      .not("clock_out", "is", null)
+      .gte("session_date", effectiveFrom);
+
+    if (effectiveTo) {
+      query = query.lte("session_date", effectiveTo);
+    }
+
+    const { data: sessions, error } = await query.order("session_date", { ascending: true });
+
+    if (error || !sessions) return;
+
+    // Recalculate each session (calculate-session chains to recalculate-daily-summary)
+    for (const session of sessions) {
+      try {
+        await fetch(
+          `${Deno.env.get("SUPABASE_URL")}/functions/v1/calculate-session`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ session_id: session.id }),
+          }
+        );
+      } catch (_) {
+        // Silently continue — best effort
+      }
+    }
+
+    // Also recalculate daily summaries for dates without sessions (in case schedule
+    // now covers days that previously had no expected minutes)
+    const { data: summaries } = await supabaseAdmin
+      .from("daily_summaries")
+      .select("summary_date")
+      .eq("employee_id", employeeId)
+      .gte("summary_date", effectiveFrom)
+      .order("summary_date", { ascending: true });
+
+    if (summaries) {
+      const sessionDates = new Set(sessions.map((s: any) => s.session_date));
+      for (const summary of summaries) {
+        if (!sessionDates.has(summary.summary_date)) {
+          try {
+            await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/recalculate-daily-summary`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  employee_id: employeeId,
+                  date: summary.summary_date,
+                }),
+              }
+            );
+          } catch (_) {
+            // Silently continue
+          }
+        }
+      }
+    }
+  } catch (_) {
+    // Best effort — don't crash the main flow
+  }
+}

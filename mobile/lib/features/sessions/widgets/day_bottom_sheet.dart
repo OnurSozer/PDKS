@@ -9,7 +9,7 @@ class DayBottomSheet extends StatelessWidget {
   final List<Map<String, dynamic>> sessions;
   final VoidCallback? onAddSession;
   final VoidCallback? onMarkLeaveDay;
-  final void Function(Map<String, dynamic>)? onSessionTap;
+  final void Function(Map<String, dynamic>)? onEditSession;
   final void Function(Map<String, dynamic>)? onDeleteSession;
 
   const DayBottomSheet({
@@ -19,7 +19,7 @@ class DayBottomSheet extends StatelessWidget {
     this.sessions = const [],
     this.onAddSession,
     this.onMarkLeaveDay,
-    this.onSessionTap,
+    this.onEditSession,
     this.onDeleteSession,
   });
 
@@ -225,8 +225,23 @@ class DayBottomSheet extends StatelessWidget {
                             ),
                           ),
                         ),
-                      if (onDeleteSession != null) ...[
+                      if (onEditSession != null) ...[
                         const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => onEditSession!(session),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppConstants.primaryColor.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.edit_outlined, size: 16, color: AppConstants.primaryColor),
+                          ),
+                        ),
+                      ],
+                      if (onDeleteSession != null) ...[
+                        const SizedBox(width: 4),
                         InkWell(
                           onTap: () => onDeleteSession!(session),
                           borderRadius: BorderRadius.circular(20),
@@ -238,13 +253,6 @@ class DayBottomSheet extends StatelessWidget {
                             ),
                             child: const Icon(Icons.delete_outline, size: 16, color: AppConstants.errorColor),
                           ),
-                        ),
-                      ],
-                      if (onSessionTap != null) ...[
-                        const SizedBox(width: 4),
-                        InkWell(
-                          onTap: () => onSessionTap!(session),
-                          child: const Icon(Icons.chevron_right, size: 18, color: AppConstants.textMuted),
                         ),
                       ],
                     ],
