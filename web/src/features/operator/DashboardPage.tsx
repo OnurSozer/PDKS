@@ -5,7 +5,7 @@ import { useEmployees } from '../../hooks/useEmployees';
 import { useActiveSessions } from '../../hooks/useSessions';
 import { useTodaySummaries } from '../../hooks/useReports';
 import { StatCard } from '../../components/shared/StatCard';
-import { formatMinutes } from '../../lib/utils';
+import { formatMinutes, formatTime } from '../../lib/utils';
 import { Users, Clock, AlertTriangle, Palmtree, Timer, UserCheck } from 'lucide-react';
 import {
   BarChart,
@@ -173,7 +173,7 @@ export function OperatorDashboardPage() {
                     {(session.employee as any)?.last_name}
                   </p>
                   <p className="text-xs text-zinc-400">
-                    {t('sessions.clockIn')}: {new Date(session.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {t('sessions.clockIn')}: {formatTime(session.clock_in)}
                   </p>
                 </div>
               </div>

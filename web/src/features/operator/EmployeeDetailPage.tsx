@@ -10,7 +10,7 @@ import { supabase } from '../../lib/supabase';
 import { WorkSession, LeaveType, EmployeeLeaveEntitlement, SpecialDayType } from '../../types';
 import { useSpecialDayTypes, useEmployeeSpecialDayTypes, useAssignSpecialDayType } from '../../hooks/useSpecialDayTypes';
 import { DataTable } from '../../components/shared/DataTable';
-import { formatMinutes } from '../../lib/utils';
+import { formatMinutes, formatTime } from '../../lib/utils';
 import { ArrowLeft, User, Save, Check } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 
@@ -119,14 +119,14 @@ export function EmployeeDetailPage() {
     {
       accessorKey: 'clock_in',
       header: t('sessions.clockIn'),
-      cell: ({ getValue }) => new Date(getValue() as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      cell: ({ getValue }) => formatTime(getValue() as string),
     },
     {
       accessorKey: 'clock_out',
       header: t('sessions.clockOut'),
       cell: ({ getValue }) => {
         const val = getValue() as string;
-        return val ? new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+        return val ? formatTime(val) : '-';
       },
     },
     {

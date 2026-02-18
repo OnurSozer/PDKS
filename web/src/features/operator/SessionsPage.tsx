@@ -8,7 +8,7 @@ import { WorkSession } from '../../types';
 import { DataTable } from '../../components/shared/DataTable';
 import { DateRangePicker } from '../../components/shared/DateRangePicker';
 import { EditSessionModal } from './EditSessionModal';
-import { formatMinutes } from '../../lib/utils';
+import { formatMinutes, formatTime } from '../../lib/utils';
 import { format, startOfMonth } from 'date-fns';
 import { Pencil } from 'lucide-react';
 
@@ -52,17 +52,14 @@ export function SessionsPage() {
     {
       accessorKey: 'clock_in',
       header: t('sessions.clockIn'),
-      cell: ({ getValue }) =>
-        new Date(getValue() as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      cell: ({ getValue }) => formatTime(getValue() as string),
     },
     {
       accessorKey: 'clock_out',
       header: t('sessions.clockOut'),
       cell: ({ getValue }) => {
         const val = getValue() as string;
-        return val
-          ? new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          : '-';
+        return val ? formatTime(val) : '-';
       },
     },
     {

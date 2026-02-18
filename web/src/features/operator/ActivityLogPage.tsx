@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { useEmployees } from '../../hooks/useEmployees';
 import { useActivityLogs } from '../../hooks/useActivityLogs';
 import { ActivityLog } from '../../types';
+import { formatTime as fmtTime, formatDateTime } from '../../lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const ACTION_TYPES = [
@@ -32,8 +33,7 @@ const ACTION_COLORS: Record<string, string> = {
 
 function formatTime(isoString?: string): string {
   if (!isoString) return '-';
-  const d = new Date(isoString);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return fmtTime(isoString);
 }
 
 function formatDate(isoString?: string): string {
@@ -181,7 +181,7 @@ export function ActivityLogPage() {
                 {logs.map((log) => (
                   <tr key={log.id} className="hover:bg-zinc-800/30 transition-colors">
                     <td className="px-6 py-4 text-sm text-zinc-300 whitespace-nowrap">
-                      {new Date(log.created_at).toLocaleString()}
+                      {formatDateTime(log.created_at)}
                     </td>
                     <td className="px-6 py-4 text-sm text-white font-medium whitespace-nowrap">
                       {log.employee?.first_name} {log.employee?.last_name}

@@ -11,16 +11,24 @@ export function formatMinutes(minutes: number): string {
   return `${h}h ${m}m`;
 }
 
+/**
+ * Strip timezone offset from Supabase timestamp strings so JavaScript
+ * treats the value as local time (all DB values are stored as local time).
+ */
+function stripTzOffset(dateStr: string): string {
+  return dateStr.replace(/[+-]\d{2}(:\d{2})?$/, '').replace(/Z$/, '');
+}
+
 export function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
 export function formatDateTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString();
+  return new Date(stripTzOffset(dateStr)).toLocaleString([], { hour12: false });
 }
 
 export function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(stripTzOffset(dateStr)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 export function getWorkDayLabels(days: number[], t: (key: string) => string): string {

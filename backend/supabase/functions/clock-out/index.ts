@@ -36,13 +36,14 @@ serve(async (req) => {
     }
 
     const now = new Date();
+    const turkeyNow = now.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" });
     const submittedBy = user.role === "operator" ? "operator" : "employee";
 
     // Update the session with clock_out
     const { data: updatedSession, error: updateError } = await supabase
       .from("work_sessions")
       .update({
-        clock_out: now.toISOString(),
+        clock_out: turkeyNow,
         clock_out_submitted_by: submittedBy,
       })
       .eq("id", session_id)
@@ -58,7 +59,7 @@ serve(async (req) => {
       action_type: "clock_out",
       resource_type: "work_session",
       resource_id: session_id,
-      details: { clock_out: now.toISOString(), submitted_by: submittedBy },
+      details: { clock_out: turkeyNow, submitted_by: submittedBy },
     });
 
     // Trigger calculate-session via internal call

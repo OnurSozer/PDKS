@@ -30,15 +30,17 @@ serve(async (req) => {
     }
 
     const now = new Date();
-    // session_date = date of clock_in (always)
-    const sessionDate = now.toISOString().split("T")[0];
+    // Format as Turkey local time (consistent with manual sessions)
+    const turkeyNow = now.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" });
+    // turkeyNow = "2026-02-18 09:30:00"
+    const sessionDate = turkeyNow.split(" ")[0];
 
     const { data: session, error: insertError } = await supabase
       .from("work_sessions")
       .insert({
         employee_id: user.id,
         company_id: user.company_id,
-        clock_in: now.toISOString(),
+        clock_in: turkeyNow,
         session_date: sessionDate,
         status: "active",
       })
@@ -54,7 +56,7 @@ serve(async (req) => {
       action_type: "clock_in",
       resource_type: "work_session",
       resource_id: session.id,
-      details: { clock_in: now.toISOString(), session_date: sessionDate },
+      details: { clock_in: turkeyNow, session_date: sessionDate },
     });
 
     return new Response(
