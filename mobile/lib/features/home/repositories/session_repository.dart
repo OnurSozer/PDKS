@@ -86,6 +86,7 @@ class SessionRepository {
         .select()
         .eq('employee_id', employeeId)
         .eq('status', 'active')
+        .isFilter('clock_out', null)
         .maybeSingle();
 
     return response;
@@ -103,6 +104,56 @@ class SessionRepository {
         .maybeSingle();
 
     return response;
+  }
+
+  Future<List<Map<String, dynamic>>> getMonthDailySummaries(
+    String employeeId,
+    DateTime month,
+  ) async {
+    final startDate = DateTime(month.year, month.month, 1);
+    final endDate = DateTime(month.year, month.month + 1, 0);
+    final startStr =
+        '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
+    final endStr =
+        '${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}';
+
+    final response = await _client
+        .from('daily_summaries')
+        .select()
+        .eq('employee_id', employeeId)
+        .gte('summary_date', startStr)
+        .lte('summary_date', endStr)
+        .order('summary_date', ascending: false);
+
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<Map<String, dynamic>> createManualSession({
+    required String sessionDate,
+    required String clockIn,
+    required String clockOut,
+  }) async {
+    final response = await _client.functions.invoke(
+      'manage-manual-session',
+      body: {
+        'action': 'create',
+        'session_date': sessionDate,
+        'clock_in': clockIn,
+        'clock_out': clockOut,
+      },
+    );
+    final data = _parseResponse(response.data);
+    return Map<String, dynamic>.from(data['session'] as Map);
+  }
+
+  Future<void> deleteSession(String sessionId) async {
+    await _client.functions.invoke(
+      'manage-manual-session',
+      body: {
+        'action': 'delete',
+        'session_id': sessionId,
+      },
+    );
   }
 
   Stream<List<Map<String, dynamic>>> subscribeToSessions(String employeeId) {

@@ -105,7 +105,10 @@ class SessionNotifier extends StateNotifier<SessionState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       await _repository.clockOut(sessionId);
-      await loadTodayData();
+      // Immediately clear active session so button flips to Start
+      state = state.copyWith(isLoading: false, clearActiveSession: true);
+      // Refresh full data in background
+      loadTodayData();
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

@@ -5,7 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../records/providers/records_provider.dart';
+import '../../leave/providers/leave_provider.dart';
 import '../../../router.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -157,202 +160,495 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final recordsState = ref.watch(recordsProvider);
+    final leaveState = ref.watch(leaveProvider);
     final l10n = AppLocalizations.of(context);
     final profile = authState.profile;
 
+    // Calculate remaining leave
+    double remainingLeave = 0;
+    for (final balance in leaveState.balances) {
+      final total = (balance['total_days'] as num?)?.toDouble() ?? 0;
+      final used = (balance['used_days'] as num?)?.toDouble() ?? 0;
+      remainingLeave += (total - used);
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.profile),
-        actions: [
-          if (!_isEditing)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () => setState(() => _isEditing = true),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => setState(() => _isEditing = false),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(AppConstants.paddingMD),
+          children: [
+            // Header row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.profile,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppConstants.textPrimary,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    _isEditing ? Icons.close : Icons.settings_outlined,
+                    color: AppConstants.textSecondary,
+                  ),
+                  onPressed: () => setState(() => _isEditing = !_isEditing),
+                ),
+              ],
             ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppConstants.paddingMD),
-        children: [
-          // Avatar
-          Center(
-            child: CircleAvatar(
-              radius: 48,
-              backgroundColor: AppConstants.primaryColor,
+            const SizedBox(height: 24),
+
+            // Avatar with purple ring
+            Center(
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppConstants.primaryColor,
+                        width: 3,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 52,
+                      backgroundColor: AppConstants.primaryColor.withValues(alpha: 0.15),
+                      child: Text(
+                        profile != null && profile.firstName.isNotEmpty && profile.lastName.isNotEmpty
+                            ? '${profile.firstName[0]}${profile.lastName[0]}'
+                            : '',
+                        style: const TextStyle(
+                          fontSize: 36,
+                          color: AppConstants.primaryColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!_isEditing)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: AppConstants.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Center(
               child: Text(
-                profile != null && profile.firstName.isNotEmpty && profile.lastName.isNotEmpty
-                    ? '${profile.firstName[0]}${profile.lastName[0]}'
-                    : '',
+                profile?.fullName ?? '',
                 style: const TextStyle(
-                  fontSize: 32,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppConstants.textPrimary,
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              profile?.fullName ?? '',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            const SizedBox(height: 4),
+            Center(
+              child: Text(
+                profile?.email ?? '',
+                style: const TextStyle(
+                  color: AppConstants.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
             ),
-          ),
-          Center(
-            child: Text(
-              profile?.email ?? '',
-              style: TextStyle(color: AppConstants.textSecondary),
+            // Role badge
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppConstants.primaryColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  profile?.role ?? '',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.primaryColor,
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: AppConstants.paddingLG),
+            const SizedBox(height: 20),
 
-          if (_isEditing)
-            _buildEditForm(l10n, authState.isLoading)
-          else
-            _buildViewProfile(l10n, profile),
-
-          const Divider(height: 32),
-
-          // Actions
-          ListTile(
-            leading: const Icon(Icons.schedule),
-            title: Text(l10n.mySchedule),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/profile/schedule'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.lock_outlined),
-            title: Text(l10n.changePassword),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _showChangePasswordDialog,
-          ),
-          ListTile(
-            leading: const Icon(Icons.language),
-            title: Text(l10n.language),
-            subtitle: Text(
-              Localizations.localeOf(context).languageCode == 'tr'
-                  ? l10n.turkish
-                  : l10n.english,
+            // Stat cards row
+            Row(
+              children: [
+                Expanded(
+                  child: _ProfileStatCard(
+                    icon: Icons.beach_access_outlined,
+                    iconColor: AppConstants.leaveColor,
+                    value: remainingLeave.toStringAsFixed(0),
+                    unit: l10n.dayUnit,
+                    label: l10n.remainingLeaveShort,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _ProfileStatCard(
+                    icon: Icons.timer_outlined,
+                    iconColor: AppConstants.clockInColor,
+                    value: AppDateUtils.formatDurationLocalized(
+                      recordsState.totalWorkedMinutes,
+                      l10n.hoursAbbrev,
+                      l10n.minutesAbbrev,
+                    ),
+                    unit: '',
+                    label: l10n.thisMonth,
+                  ),
+                ),
+              ],
             ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _toggleLanguage,
-          ),
-          const Divider(height: 16),
-          ListTile(
-            leading: const Icon(Icons.logout, color: AppConstants.clockOutColor),
-            title: Text(
-              l10n.logout,
-              style: const TextStyle(color: AppConstants.clockOutColor),
+            const SizedBox(height: 20),
+
+            if (_isEditing)
+              _buildEditForm(l10n, authState.isLoading)
+            else
+              _buildViewProfile(l10n, profile),
+
+            const SizedBox(height: 16),
+
+            // Actions
+            Container(
+              decoration: BoxDecoration(
+                color: AppConstants.cardColor,
+                borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                border: Border.all(color: AppConstants.borderColor, width: 0.5),
+              ),
+              child: Column(
+                children: [
+                  _ActionTile(
+                    icon: Icons.schedule_outlined,
+                    label: l10n.mySchedule,
+                    onTap: () => context.push('/profile/schedule'),
+                  ),
+                  Divider(height: 1, color: AppConstants.borderColor, indent: 56),
+                  _ActionTile(
+                    icon: Icons.beach_access_outlined,
+                    label: l10n.myLeave,
+                    onTap: () => context.push('/profile/leave'),
+                  ),
+                  Divider(height: 1, color: AppConstants.borderColor, indent: 56),
+                  _ActionTile(
+                    icon: Icons.shield_outlined,
+                    label: l10n.changePassword,
+                    onTap: _showChangePasswordDialog,
+                  ),
+                  Divider(height: 1, color: AppConstants.borderColor, indent: 56),
+                  _ActionTile(
+                    icon: Icons.language,
+                    label: l10n.language,
+                    subtitle: Localizations.localeOf(context).languageCode == 'tr'
+                        ? l10n.turkish
+                        : l10n.english,
+                    onTap: _toggleLanguage,
+                  ),
+                ],
+              ),
             ),
-            onTap: _confirmLogout,
-          ),
-        ],
+
+            const SizedBox(height: 12),
+
+            // Logout
+            Container(
+              decoration: BoxDecoration(
+                color: AppConstants.cardColor,
+                borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                border: Border.all(color: AppConstants.borderColor, width: 0.5),
+              ),
+              child: _ActionTile(
+                icon: Icons.logout,
+                label: l10n.logout,
+                iconColor: AppConstants.clockOutColor,
+                textColor: AppConstants.clockOutColor,
+                showChevron: false,
+                onTap: _confirmLogout,
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEditForm(AppLocalizations l10n, bool isLoading) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: _firstNameController,
-            decoration: InputDecoration(labelText: l10n.firstName),
-            validator: (v) => Validators.required(v, l10n.firstName),
-          ),
-          const SizedBox(height: AppConstants.paddingMD),
-          TextFormField(
-            controller: _lastNameController,
-            decoration: InputDecoration(labelText: l10n.lastName),
-            validator: (v) => Validators.required(v, l10n.lastName),
-          ),
-          const SizedBox(height: AppConstants.paddingMD),
-          TextFormField(
-            controller: _phoneController,
-            decoration: InputDecoration(labelText: l10n.phone),
-            keyboardType: TextInputType.phone,
-            validator: Validators.phone,
-          ),
-          const SizedBox(height: AppConstants.paddingMD),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : _saveProfile,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryColor,
-                foregroundColor: Colors.black,
-              ),
-              child: isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        color: Colors.black,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Text(l10n.save),
-            ),
-          ),
-        ],
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.paddingMD),
+      decoration: BoxDecoration(
+        color: AppConstants.cardColor,
+        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+        border: Border.all(color: AppConstants.borderColor, width: 0.5),
       ),
-    );
-  }
-
-  Widget _buildViewProfile(AppLocalizations l10n, UserProfile? profile) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.paddingMD),
+      child: Form(
+        key: _formKey,
         child: Column(
           children: [
-            _InfoRow(label: l10n.firstName, value: profile?.firstName ?? '-'),
-            _InfoRow(label: l10n.lastName, value: profile?.lastName ?? '-'),
-            _InfoRow(label: l10n.email, value: profile?.email ?? '-'),
-            _InfoRow(label: l10n.phone, value: profile?.phone ?? '-'),
-            _InfoRow(
-              label: l10n.startDateLabel,
-              value: profile?.startDate ?? '-',
+            TextFormField(
+              controller: _firstNameController,
+              decoration: InputDecoration(labelText: l10n.firstName),
+              validator: (v) => Validators.required(v, l10n.firstName),
+            ),
+            const SizedBox(height: AppConstants.paddingMD),
+            TextFormField(
+              controller: _lastNameController,
+              decoration: InputDecoration(labelText: l10n.lastName),
+              validator: (v) => Validators.required(v, l10n.lastName),
+            ),
+            const SizedBox(height: AppConstants.paddingMD),
+            TextFormField(
+              controller: _phoneController,
+              decoration: InputDecoration(labelText: l10n.phone),
+              keyboardType: TextInputType.phone,
+              validator: Validators.phone,
+            ),
+            const SizedBox(height: AppConstants.paddingMD),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _saveProfile,
+                child: isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(l10n.save),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildViewProfile(AppLocalizations l10n, UserProfile? profile) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppConstants.cardColor,
+        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+        border: Border.all(color: AppConstants.borderColor, width: 0.5),
+      ),
+      child: Column(
+        children: [
+          _InfoTile(
+            icon: Icons.mail_outline,
+            label: l10n.email,
+            value: profile?.email ?? '-',
+          ),
+          Divider(height: 1, color: AppConstants.borderColor, indent: 56),
+          _InfoTile(
+            icon: Icons.phone_outlined,
+            label: l10n.phone,
+            value: profile?.phone ?? '-',
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _InfoRow extends StatelessWidget {
+class _ProfileStatCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String unit;
+  final String label;
+
+  const _ProfileStatCard({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.unit,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppConstants.cardColor,
+        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+        border: Border.all(color: AppConstants.borderColor, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: iconColor),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppConstants.textPrimary,
+                ),
+              ),
+              if (unit.isNotEmpty) ...[
+                const SizedBox(width: 4),
+                Text(
+                  unit,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppConstants.textSecondary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppConstants.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoTile extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String value;
 
-  const _InfoRow({required this.label, required this.value});
+  const _InfoTile({required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(color: AppConstants.textSecondary, fontSize: 14),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(color: AppConstants.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
-            ),
+          Icon(icon, size: 22, color: AppConstants.primaryColor),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppConstants.textMuted,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: AppConstants.textPrimary,
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? subtitle;
+  final Color? iconColor;
+  final Color? textColor;
+  final bool showChevron;
+  final VoidCallback onTap;
+
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    this.subtitle,
+    this.iconColor,
+    this.textColor,
+    this.showChevron = true,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: iconColor ?? AppConstants.textSecondary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: textColor ?? AppConstants.textPrimary,
+                    ),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppConstants.textMuted,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (showChevron)
+              const Icon(
+                Icons.chevron_right,
+                color: AppConstants.textMuted,
+                size: 20,
+              ),
+          ],
+        ),
       ),
     );
   }

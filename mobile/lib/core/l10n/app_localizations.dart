@@ -87,6 +87,19 @@ class AppLocalizations {
   String get cancelled => get('cancelled');
   String get noSessions => get('no_sessions');
 
+  // ---- Calendar & Records ----
+  String get calendar => get('calendar');
+  String get records => get('records');
+  String get recentRecords => get('recent_records');
+  String get attendance => get('attendance');
+  String get hoursWorked => get('hours_worked');
+  String get onTime => get('on_time');
+  String get lateLabel => get('late');
+  String get absent => get('absent');
+  String get holiday => get('holiday');
+  String get missing => get('missing');
+  String get extra => get('extra');
+
   // ---- Missed Clock-Out ----
   String get missedClockOut => get('missed_clock_out');
   String get missedClockOutTitle => get('missed_clock_out_title');
@@ -112,6 +125,7 @@ class AppLocalizations {
   String get cancelLeave => get('cancel_leave');
   String get cancelLeaveConfirm => get('cancel_leave_confirm');
   String get noLeaveTypes => get('no_leave_types');
+  String get myLeave => get('my_leave');
 
   // ---- Profile ----
   String get profile => get('profile');
@@ -136,6 +150,12 @@ class AppLocalizations {
   String get notes => get('notes');
   String get passwordsDoNotMatch => get('passwords_do_not_match');
 
+  // ---- UI ----
+  String get welcomeBack => get('welcome_back');
+  String get recentActivity => get('recent_activity');
+  String get today => get('today');
+  String get yesterday => get('yesterday');
+
   // ---- Schedule ----
   String get schedule => get('schedule');
   String get shiftName => get('shift_name');
@@ -151,6 +171,104 @@ class AppLocalizations {
   String get friday => get('friday');
   String get saturday => get('saturday');
   String get sunday => get('sunday');
+
+  // ---- Statistics ----
+  String get statistics => get('statistics');
+  String get monthlyWork => get('monthly_work');
+  String get details => get('details');
+  String get workedDays => get('worked_days');
+  String get totalDuration => get('total_duration');
+  String get dailyAverage => get('daily_average');
+  String get usedLeave => get('used_leave');
+  String get longestDay => get('longest_day');
+  String get shortestSession => get('shortest_session');
+  String get statusLabel => get('status_label');
+  String get complete => get('complete');
+  String get hoursAbbrev => get('hours_abbrev');
+  String get minutesAbbrev => get('minutes_abbrev');
+  String get expectedHours => get('expected_hours');
+  String get netHours => get('net_hours');
+  String get overtimeHoursTotal => get('overtime_hours_total');
+  String get deficitHours => get('deficit_hours');
+  String get otPercent => get('ot_percent');
+  String get otDays => get('ot_days');
+  String get lateDays => get('late_days');
+  String get absentDays => get('absent_days');
+
+  // ---- Calendar (new) ----
+  String get fullShift => get('full_shift');
+  String get overtimeShift => get('overtime_shift');
+  String get addSession => get('add_session');
+  String get markLeaveDay => get('mark_leave_day');
+  String get entryTime => get('entry_time');
+  String get exitTime => get('exit_time');
+  String get sessionType => get('session_type');
+  String get normalShift => get('normal_shift');
+  String get create => get('create');
+
+  // ---- Calendar actions ----
+  String get addSessionSubtitle => get('add_session_subtitle');
+  String get markLeaveDaySubtitle => get('mark_leave_day_subtitle');
+  String get manualSessionTitle => get('manual_session_title');
+  String get selectLeaveType => get('select_leave_type');
+  String get normalLeave => get('normal_leave');
+  String get sickLeave => get('sick_leave');
+  String get normalLeaveSubtitle => get('normal_leave_subtitle');
+  String get sickLeaveSubtitle => get('sick_leave_subtitle');
+  String get fullDay => get('full_day');
+  String get deductionInfo => get('deduction_info');
+  String get noDeductionInfo => get('no_deduction_info');
+  String get markButton => get('mark_button');
+  String get creatingSession => get('creating_session');
+  String get savingLeave => get('saving_leave');
+  String get success => get('success');
+  String get sessionCreated => get('session_created');
+  String get leaveMarked => get('leave_marked');
+  String get calledByBoss => get('called_by_boss');
+  String get overtimeSession => get('overtime_session');
+  String get exitBeforeEntry => get('exit_before_entry');
+  String get deleteSession => get('delete_session');
+  String get deleteSessionConfirm => get('delete_session_confirm');
+  String get sessionDeleted => get('session_deleted');
+  String get deleting => get('deleting');
+
+  // ---- Profile (new) ----
+  String get remainingLeaveShort => get('remaining_leave_short');
+  String get thisMonth => get('this_month');
+  String get dayUnit => get('day_unit');
+
+  // ---- Month names (short) ----
+  String get monthJan => get('month_jan');
+  String get monthFeb => get('month_feb');
+  String get monthMar => get('month_mar');
+  String get monthApr => get('month_apr');
+  String get monthMay => get('month_may');
+  String get monthJun => get('month_jun');
+  String get monthJul => get('month_jul');
+  String get monthAug => get('month_aug');
+  String get monthSep => get('month_sep');
+  String get monthOct => get('month_oct');
+  String get monthNov => get('month_nov');
+  String get monthDec => get('month_dec');
+
+  // ---- Day abbreviations ----
+  String get dayMon => get('day_mon');
+  String get dayTue => get('day_tue');
+  String get dayWed => get('day_wed');
+  String get dayThu => get('day_thu');
+  String get dayFri => get('day_fri');
+  String get daySat => get('day_sat');
+  String get daySun => get('day_sun');
+
+  List<String> get shortMonthNames => [
+    monthJan, monthFeb, monthMar, monthApr,
+    monthMay, monthJun, monthJul, monthAug,
+    monthSep, monthOct, monthNov, monthDec,
+  ];
+
+  List<String> get shortDayNames => [
+    dayMon, dayTue, dayWed, dayThu, dayFri, daySat, daySun,
+  ];
 
   // ---- English translations ----
   static const Map<String, String> _en = {
@@ -181,7 +299,7 @@ class AppLocalizations {
     'clock_in': 'Clock In',
     'clock_out': 'Clock Out',
     'clocked_in_since': 'Clocked in since',
-    'not_clocked_in': 'Not clocked in',
+    'not_clocked_in': 'You are clocked out',
     'today_sessions': "Today's Sessions",
     'today_summary': "Today's Summary",
     'total_hours': 'Total',
@@ -209,6 +327,18 @@ class AppLocalizations {
     'cancelled': 'Cancelled',
     'no_sessions': 'No sessions found',
 
+    'calendar': 'Calendar',
+    'records': 'Records',
+    'recent_records': 'Recent Records',
+    'attendance': 'Attendance',
+    'hours_worked': 'Hours Worked',
+    'on_time': 'ON TIME',
+    'late': 'LATE',
+    'absent': 'Absent',
+    'holiday': 'Holiday',
+    'missing': 'Missing',
+    'extra': 'Extra',
+
     'missed_clock_out': 'Missed Clock-Out',
     'missed_clock_out_title': 'Open Session Found',
     'missed_clock_out_message':
@@ -233,6 +363,7 @@ class AppLocalizations {
     'cancel_leave': 'Cancel Leave',
     'cancel_leave_confirm': 'Are you sure you want to cancel this leave record?',
     'no_leave_types': 'No leave types configured for your company',
+    'my_leave': 'My Leave',
 
     'profile': 'Profile',
     'edit_profile': 'Edit Profile',
@@ -255,6 +386,11 @@ class AppLocalizations {
     'notes': 'Notes',
     'passwords_do_not_match': 'Passwords do not match',
 
+    'welcome_back': 'Welcome back',
+    'recent_activity': 'Your recent activity log.',
+    'today': 'Today',
+    'yesterday': 'Yesterday',
+
     'schedule': 'Schedule',
     'shift_name': 'Shift',
     'shift_start': 'Start',
@@ -269,6 +405,94 @@ class AppLocalizations {
     'friday': 'Fri',
     'saturday': 'Sat',
     'sunday': 'Sun',
+
+    // Statistics
+    'statistics': 'Statistics',
+    'monthly_work': 'Monthly Work',
+    'details': 'Details',
+    'worked_days': 'Worked Days',
+    'total_duration': 'Total Duration',
+    'daily_average': 'Daily Average',
+    'used_leave': 'Used Leave',
+    'longest_day': 'Longest Day',
+    'shortest_session': 'Shortest Session',
+    'status_label': 'Status',
+    'complete': 'Complete',
+    'hours_abbrev': 'h',
+    'minutes_abbrev': 'm',
+    'expected_hours': 'Expected',
+    'net_hours': 'Net Hours',
+    'overtime_hours_total': 'Overtime',
+    'deficit_hours': 'Deficit',
+    'ot_percent': 'OT %',
+    'ot_days': 'OT Days',
+    'late_days': 'Late Days',
+    'absent_days': 'Absent Days',
+
+    // Calendar (new)
+    'full_shift': 'Full Shift',
+    'overtime_shift': 'Overtime',
+    'add_session': 'Add Session',
+    'mark_leave_day': 'Mark Leave Day',
+    'entry_time': 'Entry Time',
+    'exit_time': 'Exit Time',
+    'session_type': 'Session Type',
+    'normal_shift': 'Normal Shift',
+    'create': 'Create',
+
+    // Calendar actions
+    'add_session_subtitle': 'Set entry and exit time',
+    'mark_leave_day_subtitle': 'Mark this day as leave',
+    'manual_session_title': 'Add Manual Session',
+    'select_leave_type': 'Select Leave Type',
+    'normal_leave': 'Normal Leave',
+    'sick_leave': 'Sick Leave',
+    'normal_leave_subtitle': 'Deducted from leave balance',
+    'sick_leave_subtitle': 'Not deducted from balance',
+    'full_day': 'Full Day',
+    'deduction_info': '1 day will be deducted from balance.',
+    'no_deduction_info': 'Not deducted from balance.',
+    'mark_button': 'Mark',
+    'creating_session': 'Creating...',
+    'saving_leave': 'Saving...',
+    'success': 'Success',
+    'session_created': 'Session created',
+    'leave_marked': 'Leave day marked',
+    'called_by_boss': 'Called by Boss',
+    'overtime_session': 'Overtime',
+    'exit_before_entry': 'Exit time cannot be before entry time',
+    'delete_session': 'Delete Session',
+    'delete_session_confirm': 'Are you sure you want to delete this session?',
+    'session_deleted': 'Session deleted',
+    'deleting': 'Deleting...',
+
+    // Profile (new)
+    'remaining_leave_short': 'Remaining Leave',
+    'this_month': 'This Month',
+    'day_unit': 'day',
+
+    // Month names (short)
+    'month_jan': 'Jan',
+    'month_feb': 'Feb',
+    'month_mar': 'Mar',
+    'month_apr': 'Apr',
+    'month_may': 'May',
+    'month_jun': 'Jun',
+    'month_jul': 'Jul',
+    'month_aug': 'Aug',
+    'month_sep': 'Sep',
+    'month_oct': 'Oct',
+    'month_nov': 'Nov',
+    'month_dec': 'Dec',
+
+    // Day abbreviations
+    'day_mon': 'Mo',
+    'day_tue': 'Tu',
+    'day_wed': 'We',
+    'day_thu': 'Th',
+    'day_fri': 'Fr',
+    'day_sat': 'Sa',
+    'day_sun': 'Su',
   };
 
   // ---- Turkish translations ----
@@ -328,6 +552,18 @@ class AppLocalizations {
     'cancelled': 'İptal Edildi',
     'no_sessions': 'Oturum bulunamadı',
 
+    'calendar': 'Takvim',
+    'records': 'Kayıtlar',
+    'recent_records': 'Son Kayıtlar',
+    'attendance': 'Katılım',
+    'hours_worked': 'Çalışma Saati',
+    'on_time': 'ZAMANINDA',
+    'late': 'GEÇ',
+    'absent': 'Devamsız',
+    'holiday': 'Tatil',
+    'missing': 'Eksik',
+    'extra': 'Fazla',
+
     'missed_clock_out': 'Unutulan Çıkış',
     'missed_clock_out_title': 'Açık Oturum Bulundu',
     'missed_clock_out_message':
@@ -352,6 +588,7 @@ class AppLocalizations {
     'cancel_leave': 'İzni İptal Et',
     'cancel_leave_confirm': 'Bu izin kaydını iptal etmek istediğinizden emin misiniz?',
     'no_leave_types': 'Şirketiniz için izin türü tanımlanmamış',
+    'my_leave': 'İzinlerim',
 
     'profile': 'Profil',
     'edit_profile': 'Profili Düzenle',
@@ -374,6 +611,11 @@ class AppLocalizations {
     'notes': 'Notlar',
     'passwords_do_not_match': 'Şifreler uyuşmuyor',
 
+    'welcome_back': 'Tekrar hoş geldin',
+    'recent_activity': 'Son aktivite kaydınız.',
+    'today': 'Bugün',
+    'yesterday': 'Dün',
+
     'schedule': 'Vardiya',
     'shift_name': 'Vardiya',
     'shift_start': 'Başlangıç',
@@ -388,6 +630,94 @@ class AppLocalizations {
     'friday': 'Cum',
     'saturday': 'Cmt',
     'sunday': 'Paz',
+
+    // Statistics
+    'statistics': 'İstatistik',
+    'monthly_work': 'Aylık Çalışma',
+    'details': 'Detaylar',
+    'worked_days': 'Çalışılan Gün',
+    'total_duration': 'Toplam Süre',
+    'daily_average': 'Ortalama Günlük',
+    'used_leave': 'Kullanılan İzin',
+    'longest_day': 'En Uzun Gün',
+    'shortest_session': 'En Kısa Mesai',
+    'status_label': 'Durum',
+    'complete': 'Tamamlandı',
+    'hours_abbrev': 's',
+    'minutes_abbrev': 'dk',
+    'expected_hours': 'Beklenen',
+    'net_hours': 'Net Saat',
+    'overtime_hours_total': 'Fazla Mesai',
+    'deficit_hours': 'Eksik',
+    'ot_percent': 'FM %',
+    'ot_days': 'FM Gün',
+    'late_days': 'Geç Kalma',
+    'absent_days': 'Devamsızlık',
+
+    // Calendar (new)
+    'full_shift': 'Tam Mesai',
+    'overtime_shift': 'Fazla Mesai',
+    'add_session': 'Seans Ekle',
+    'mark_leave_day': 'İzin Günü İşaretle',
+    'entry_time': 'Giriş Saati',
+    'exit_time': 'Çıkış Saati',
+    'session_type': 'Seans Türü',
+    'normal_shift': 'Normal Mesai',
+    'create': 'Oluştur',
+
+    // Calendar actions
+    'add_session_subtitle': 'Giriş ve çıkış saati belirle',
+    'mark_leave_day_subtitle': 'Bu günü izinli olarak kaydet',
+    'manual_session_title': 'Manuel Seans Ekle',
+    'select_leave_type': 'İzin Türü Seçin',
+    'normal_leave': 'Normal İzin',
+    'sick_leave': 'Hastalık İzni',
+    'normal_leave_subtitle': 'İzin bakiyesinden düşülür',
+    'sick_leave_subtitle': 'İzin bakiyesinden düşülmez',
+    'full_day': 'Tam Gün',
+    'deduction_info': 'İzin bakiyesinden 1 gün düşülecek.',
+    'no_deduction_info': 'İzin bakiyesinden düşülmeyecek.',
+    'mark_button': 'İşaretle',
+    'creating_session': 'Oluşturuluyor...',
+    'saving_leave': 'Kaydediliyor...',
+    'success': 'Başarılı',
+    'session_created': 'Seans oluşturuldu',
+    'leave_marked': 'İzin günü kaydedildi',
+    'called_by_boss': 'Patron Çağırdı',
+    'overtime_session': 'Ek Mesai',
+    'exit_before_entry': 'Çıkış saati giriş saatinden önce olamaz',
+    'delete_session': 'Seansı Sil',
+    'delete_session_confirm': 'Bu seansı silmek istediğinizden emin misiniz?',
+    'session_deleted': 'Seans silindi',
+    'deleting': 'Siliniyor...',
+
+    // Profile (new)
+    'remaining_leave_short': 'Kalan İzin',
+    'this_month': 'Bu Ay',
+    'day_unit': 'gün',
+
+    // Month names (short)
+    'month_jan': 'Oca',
+    'month_feb': 'Şub',
+    'month_mar': 'Mar',
+    'month_apr': 'Nis',
+    'month_may': 'May',
+    'month_jun': 'Haz',
+    'month_jul': 'Tem',
+    'month_aug': 'Ağu',
+    'month_sep': 'Eyl',
+    'month_oct': 'Eki',
+    'month_nov': 'Kas',
+    'month_dec': 'Ara',
+
+    // Day abbreviations
+    'day_mon': 'Pt',
+    'day_tue': 'Sa',
+    'day_wed': 'Ça',
+    'day_thu': 'Pe',
+    'day_fri': 'Cu',
+    'day_sat': 'Ct',
+    'day_sun': 'Pa',
   };
 }
 

@@ -111,6 +111,12 @@ export interface DailySummary {
   late_minutes: number;
   is_absent: boolean;
   is_leave: boolean;
+  deficit_minutes: number;
+  is_holiday: boolean;
+  is_boss_call: boolean;
+  special_day_type_id?: string | null;
+  effective_work_minutes: number;
+  work_day_type: 'regular' | 'weekend' | 'holiday';
   status: 'pending' | 'complete' | 'incomplete' | 'leave' | 'absent' | 'holiday';
   created_at?: string;
   updated_at?: string;
@@ -186,6 +192,99 @@ export interface DeviceToken {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface CompanyHoliday {
+  id: string;
+  company_id: string;
+  name: string;
+  holiday_date: string;
+  is_recurring: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CompanyWorkSettings {
+  id: string;
+  company_id: string;
+  monthly_work_days_constant: number;
+  overtime_multiplier: number;
+  weekend_multiplier: number;
+  holiday_multiplier: number;
+  boss_call_multiplier: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SpecialDayType {
+  id: string;
+  company_id: string;
+  name: string;
+  code: string;
+  calculation_mode: 'rounding' | 'fixed_hours';
+  multiplier: number;
+  base_minutes: number;
+  extra_minutes: number;
+  extra_multiplier: number;
+  applies_to_all: boolean;
+  is_active: boolean;
+  display_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface EmployeeSpecialDayType {
+  id: string;
+  employee_id: string;
+  special_day_type_id: string;
+  special_day_type?: SpecialDayType;
+  company_id: string;
+  created_at?: string;
+}
+
+export interface SpecialDayStat {
+  days: number;
+  minutes: number;
+  name: string;
+  code: string;
+}
+
+export interface MonthlyEmployeeSummary {
+  employee_id: string;
+  employee_name: string;
+  work_days: number;
+  total_work_minutes: number;
+  expected_work_minutes: number;
+  boss_call_days: number;
+  boss_call_minutes: number;
+  special_day_stats?: Record<string, SpecialDayStat>;
+  net_minutes: number;
+  deficit_minutes: number;
+  overtime_value: number;
+  overtime_days: number;
+  overtime_percentage: number;
+  late_days: number;
+  absent_days: number;
+  leave_days: number;
+  daily_details: MonthlyDayDetail[];
+}
+
+export interface MonthlyDayDetail {
+  date: string;
+  is_work_day: boolean;
+  work_day_type: 'regular' | 'weekend' | 'holiday';
+  total_work_minutes: number;
+  expected_work_minutes: number;
+  effective_work_minutes: number;
+  is_boss_call: boolean;
+  is_late: boolean;
+  is_absent: boolean;
+  is_leave: boolean;
+  deficit_minutes: number;
+  status: string;
+  special_day_type_id?: string | null;
+  special_day_type_name?: string | null;
+  special_day_type_code?: string | null;
 }
 
 // Auth types

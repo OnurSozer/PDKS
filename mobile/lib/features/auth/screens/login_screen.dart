@@ -50,6 +50,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
+      backgroundColor: AppConstants.surfaceColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -60,76 +61,152 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.access_time_filled,
-                    size: 80,
-                    color: AppConstants.primaryColor,
+                  // Logo icon
+                  Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppConstants.primaryLight,
+                          AppConstants.primaryColor,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppConstants.primaryColor.withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.access_time_filled,
+                      size: 44,
+                      color: Colors.white,
+                    ),
                   ),
-                  const SizedBox(height: AppConstants.paddingMD),
+                  const SizedBox(height: 24),
                   Text(
                     l10n.appTitle,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppConstants.primaryColor,
-                        ),
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppConstants.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: AppConstants.paddingSM),
+                  const SizedBox(height: 8),
                   Text(
                     l10n.loginSubtitle,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppConstants.textSecondary,
-                        ),
-                  ),
-                  const SizedBox(height: AppConstants.paddingXL),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    validator: Validators.email,
-                    decoration: InputDecoration(
-                      labelText: l10n.email,
-                      prefixIcon: const Icon(Icons.email_outlined),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: AppConstants.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: AppConstants.paddingMD),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    validator: Validators.password,
-                    onFieldSubmitted: (_) => _handleLogin(),
-                    decoration: InputDecoration(
-                      labelText: l10n.password,
-                      prefixIcon: const Icon(Icons.lock_outlined),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
+                  const SizedBox(height: 40),
+
+                  // Email field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppConstants.inputColor,
+                      borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                    ),
+                    child: TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      validator: Validators.email,
+                      decoration: InputDecoration(
+                        labelText: l10n.email,
+                        prefixIcon: const Icon(Icons.email_outlined, color: AppConstants.textMuted),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                          borderSide: const BorderSide(color: AppConstants.primaryColor, width: 1.5),
                         ),
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                          borderSide: const BorderSide(color: AppConstants.errorColor),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                          borderSide: const BorderSide(color: AppConstants.errorColor, width: 1.5),
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppConstants.paddingLG),
+                  const SizedBox(height: AppConstants.paddingMD),
+
+                  // Password field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppConstants.inputColor,
+                      borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                    ),
+                    child: TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      validator: Validators.password,
+                      onFieldSubmitted: (_) => _handleLogin(),
+                      decoration: InputDecoration(
+                        labelText: l10n.password,
+                        prefixIcon: const Icon(Icons.lock_outlined, color: AppConstants.textMuted),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: AppConstants.textMuted,
+                          ),
+                          onPressed: () {
+                            setState(() => _obscurePassword = !_obscurePassword);
+                          },
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                          borderSide: const BorderSide(color: AppConstants.primaryColor, width: 1.5),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                          borderSide: const BorderSide(color: AppConstants.errorColor),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                          borderSide: const BorderSide(color: AppConstants.errorColor, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Login button
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
                       onPressed: authState.isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppConstants.primaryColor,
-                        foregroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                        ),
+                        elevation: 0,
                       ),
                       child: authState.isLoading
                           ? const SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                color: Colors.black,
+                                color: Colors.white,
                                 strokeWidth: 2,
                               ),
                             )

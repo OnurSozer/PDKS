@@ -51,7 +51,7 @@ class PdksApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'PDKS',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.darkTheme,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [

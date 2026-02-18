@@ -5,6 +5,9 @@ import { getSupabaseAdmin } from "../_shared/supabase-client.ts";
 /**
  * Recalculates the daily summary for a given employee + date.
  * Called internally after session calculation or leave changes.
+ *
+ * Now also handles: deficit_minutes, is_holiday, is_boss_call,
+ * effective_work_minutes, and work_day_type.
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,7 +15,9 @@ serve(async (req) => {
   }
 
   try {
-    const { employee_id, date } = await req.json();
+    const body = await req.json();
+    const { employee_id, date, work_day_type: passedWorkDayType, is_holiday: passedIsHoliday } = body;
+
     if (!employee_id || !date) {
       throw new Error("employee_id and date are required");
     }
@@ -87,6 +92,11 @@ serve(async (req) => {
         const [endH, endM] = endTime.split(":").map(Number);
         expectedWorkMinutes = (endH * 60 + endM) - (startH * 60 + startM);
         if (expectedWorkMinutes < 0) expectedWorkMinutes += 1440;
+
+        // Subtract break duration from expected minutes
+        const breakMinutes = template?.break_duration_minutes ?? schedule.custom_break_duration_minutes ?? 0;
+        expectedWorkMinutes -= breakMinutes;
+
         scheduleStartTime = startTime;
       }
     }
@@ -139,6 +149,133 @@ serve(async (req) => {
 
     const isAbsent = status === "absent" && !isLeave;
 
+    // Calculate deficit minutes
+    const deficitMinutes = Math.max(0, expectedWorkMinutes - totalWorkMinutes);
+
+    // Determine work_day_type
+    let workDayType = passedWorkDayType || "regular";
+    let isHoliday = passedIsHoliday || false;
+
+    // If not passed from calculate-session, determine it ourselves
+    if (!passedWorkDayType && profile.company_id) {
+      const { data: holidayCheck } = await supabaseAdmin
+        .from("company_holidays")
+        .select("id")
+        .eq("company_id", profile.company_id)
+        .eq("holiday_date", date)
+        .limit(1);
+
+      if (holidayCheck && holidayCheck.length > 0) {
+        workDayType = "holiday";
+        isHoliday = true;
+      } else {
+        // Check recurring
+        const { data: recurringCheck } = await supabaseAdmin
+          .from("company_holidays")
+          .select("holiday_date")
+          .eq("company_id", profile.company_id)
+          .eq("is_recurring", true);
+
+        if (recurringCheck) {
+          const dateMonthDay = date.substring(5);
+          for (const rh of recurringCheck) {
+            if ((rh.holiday_date as string).substring(5) === dateMonthDay) {
+              workDayType = "holiday";
+              isHoliday = true;
+              break;
+            }
+          }
+        }
+
+        if (!isHoliday && expectedWorkMinutes === 0) {
+          workDayType = "weekend";
+        }
+      }
+    }
+
+    // Preserve existing special day type (only toggle-special-day / toggle-boss-call changes it)
+    let isBossCall = false;
+    let effectiveWorkMinutes = totalWorkMinutes;
+    let specialDayTypeId: string | null = null;
+
+    const { data: existingSummary } = await supabaseAdmin
+      .from("daily_summaries")
+      .select("is_boss_call, effective_work_minutes, special_day_type_id")
+      .eq("employee_id", employee_id)
+      .eq("summary_date", date)
+      .single();
+
+    if (existingSummary && existingSummary.special_day_type_id) {
+      specialDayTypeId = existingSummary.special_day_type_id;
+
+      // Fetch the special day type definition
+      const { data: dayType } = await supabaseAdmin
+        .from("special_day_types")
+        .select("*")
+        .eq("id", specialDayTypeId)
+        .single();
+
+      if (dayType) {
+        isBossCall = dayType.code === "boss_call";
+
+        if (dayType.calculation_mode === "fixed_hours") {
+          effectiveWorkMinutes = Math.round(
+            dayType.base_minutes + dayType.extra_minutes * parseFloat(dayType.extra_multiplier)
+          );
+        } else {
+          // rounding mode
+          const mult = parseFloat(dayType.multiplier) || 1.5;
+          const halfDay = Math.round((expectedWorkMinutes || 480) / 2);
+          const fullDay = expectedWorkMinutes || 480;
+
+          let roundedMinutes: number;
+          if (totalWorkMinutes <= 0) {
+            roundedMinutes = halfDay;
+          } else if (totalWorkMinutes < halfDay) {
+            roundedMinutes = halfDay;
+          } else if (totalWorkMinutes <= fullDay) {
+            roundedMinutes = fullDay;
+          } else {
+            roundedMinutes = totalWorkMinutes;
+          }
+          effectiveWorkMinutes = Math.round(roundedMinutes * mult);
+        }
+      }
+    } else if (existingSummary && existingSummary.is_boss_call) {
+      // Legacy fallback: is_boss_call = true but no special_day_type_id
+      isBossCall = true;
+
+      const { data: workSettings } = await supabaseAdmin
+        .from("company_work_settings")
+        .select("boss_call_multiplier")
+        .eq("company_id", profile.company_id)
+        .single();
+
+      const bossCallMultiplier = workSettings
+        ? parseFloat(workSettings.boss_call_multiplier)
+        : 1.5;
+
+      const halfDay = Math.round((expectedWorkMinutes || 480) / 2);
+      const fullDay = expectedWorkMinutes || 480;
+
+      let roundedMinutes: number;
+      if (totalWorkMinutes <= 0) {
+        roundedMinutes = halfDay;
+      } else if (totalWorkMinutes < halfDay) {
+        roundedMinutes = halfDay;
+      } else if (totalWorkMinutes <= fullDay) {
+        roundedMinutes = fullDay;
+      } else {
+        roundedMinutes = totalWorkMinutes;
+      }
+
+      effectiveWorkMinutes = Math.round(roundedMinutes * bossCallMultiplier);
+    }
+
+    if (isHoliday && status === "absent") {
+      status = "holiday";
+    }
+
     // 8. Upsert daily summary
     const { data: summary, error: upsertError } = await supabaseAdmin
       .from("daily_summaries")
@@ -156,6 +293,12 @@ serve(async (req) => {
           late_minutes: lateMinutes,
           is_absent: isAbsent,
           is_leave: isLeave,
+          deficit_minutes: deficitMinutes,
+          is_holiday: isHoliday,
+          is_boss_call: isBossCall,
+          special_day_type_id: specialDayTypeId,
+          effective_work_minutes: effectiveWorkMinutes,
+          work_day_type: workDayType,
           status,
         },
         {

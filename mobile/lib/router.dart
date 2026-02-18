@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'core/constants/app_constants.dart';
 import 'core/l10n/app_localizations.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'features/sessions/screens/session_history_screen.dart';
 import 'features/sessions/screens/session_detail_screen.dart';
+import 'features/records/screens/records_screen.dart';
 import 'features/leave/screens/leave_screen.dart';
 import 'features/leave/screens/record_leave_screen.dart';
 import 'features/profile/screens/profile_screen.dart';
@@ -49,7 +51,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const HomeScreen(),
           ),
           GoRoute(
-            path: '/sessions',
+            path: '/calendar',
             builder: (context, state) => const SessionHistoryScreen(),
             routes: [
               GoRoute(
@@ -67,14 +69,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
-            path: '/leave',
-            builder: (context, state) => const LeaveScreen(),
-            routes: [
-              GoRoute(
-                path: 'new',
-                builder: (context, state) => const RecordLeaveScreen(),
-              ),
-            ],
+            path: '/records',
+            builder: (context, state) => const RecordsScreen(),
           ),
           GoRoute(
             path: '/profile',
@@ -83,6 +79,16 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'schedule',
                 builder: (context, state) => const ScheduleViewScreen(),
+              ),
+              GoRoute(
+                path: 'leave',
+                builder: (context, state) => const LeaveScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    builder: (context, state) => const RecordLeaveScreen(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -100,8 +106,8 @@ class _MainShell extends StatelessWidget {
   static int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/sessions')) return 1;
-    if (location.startsWith('/leave')) return 2;
+    if (location.startsWith('/calendar')) return 1;
+    if (location.startsWith('/records')) return 2;
     if (location.startsWith('/profile')) return 3;
     return 0;
   }
@@ -113,42 +119,50 @@ class _MainShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 0:
-              context.go('/home');
-            case 1:
-              context.go('/sessions');
-            case 2:
-              context.go('/leave');
-            case 3:
-              context.go('/profile');
-          }
-        },
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.home_outlined),
-            selectedIcon: const Icon(Icons.home),
-            label: l10n.home,
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppConstants.backgroundColor,
+          border: Border(
+            top: BorderSide(color: AppConstants.borderColor, width: 0.5),
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.history_outlined),
-            selectedIcon: const Icon(Icons.history),
-            label: l10n.sessions,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.beach_access_outlined),
-            selectedIcon: const Icon(Icons.beach_access),
-            label: l10n.leave,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.person_outlined),
-            selectedIcon: const Icon(Icons.person),
-            label: l10n.profile,
-          ),
-        ],
+        ),
+        child: NavigationBar(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: (index) {
+            switch (index) {
+              case 0:
+                context.go('/home');
+              case 1:
+                context.go('/calendar');
+              case 2:
+                context.go('/records');
+              case 3:
+                context.go('/profile');
+            }
+          },
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home_rounded),
+              label: l10n.home,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.calendar_today_outlined),
+              selectedIcon: const Icon(Icons.calendar_today),
+              label: l10n.calendar,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.bar_chart_outlined),
+              selectedIcon: const Icon(Icons.bar_chart_rounded),
+              label: l10n.statistics,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.person_outlined),
+              selectedIcon: const Icon(Icons.person),
+              label: l10n.profile,
+            ),
+          ],
+        ),
       ),
     );
   }

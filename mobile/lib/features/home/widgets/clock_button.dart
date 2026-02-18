@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/l10n/app_localizations.dart';
 
 class ClockButton extends StatelessWidget {
   final bool isClockedIn;
@@ -16,10 +15,12 @@ class ClockButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final color = isClockedIn ? AppConstants.clockOutColor : AppConstants.clockInColor;
-    final label = isClockedIn ? l10n.clockOut : l10n.clockIn;
-    final icon = isClockedIn ? Icons.logout : Icons.login;
+    final subtitle = isClockedIn ? 'CHECK OUT' : 'CHECK IN';
+
+    // Purple gradient for clock-in, red gradient for clock-out
+    final colors = isClockedIn
+        ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
+        : [AppConstants.primaryLight, AppConstants.primaryDark];
 
     return GestureDetector(
       onTap: isLoading ? null : onPressed,
@@ -28,12 +29,16 @@ class ClockButton extends StatelessWidget {
         height: AppConstants.clockButtonSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: color,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: colors,
+          ),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: colors[0].withValues(alpha: 0.4),
+              blurRadius: 30,
+              offset: const Offset(0, 12),
             ),
           ],
         ),
@@ -47,14 +52,23 @@ class ClockButton extends StatelessWidget {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 48, color: Colors.white),
-                  const SizedBox(height: 8),
                   Text(
-                    label,
+                    isClockedIn ? 'Stop' : 'Start',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.5,
                     ),
                   ),
                 ],

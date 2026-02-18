@@ -23,6 +23,8 @@ import { SchedulesPage } from './features/operator/SchedulesPage';
 import { OvertimeRulesPage } from './features/operator/OvertimeRulesPage';
 import { LeavePage } from './features/operator/LeavePage';
 import { ReportsPage } from './features/operator/ReportsPage';
+import { HolidaysPage } from './features/operator/HolidaysPage';
+import { MonthlySummaryPage } from './features/operator/MonthlySummaryPage';
 import { SettingsPage } from './features/operator/SettingsPage';
 
 // Root redirect component
@@ -83,7 +85,9 @@ export const router = createBrowserRouter([
       { path: 'schedules', element: <SchedulesPage /> },
       { path: 'overtime', element: <OvertimeRulesPage /> },
       { path: 'leave', element: <LeavePage /> },
+      { path: 'holidays', element: <HolidaysPage /> },
       { path: 'reports', element: <ReportsPage /> },
+      { path: 'monthly-summary', element: <MonthlySummaryPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
   },

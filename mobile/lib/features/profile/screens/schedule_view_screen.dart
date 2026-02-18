@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../providers/profile_provider.dart';
@@ -13,29 +14,54 @@ class ScheduleViewScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.mySchedule),
-      ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : state.schedule == null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.event_busy, size: 64, color: AppConstants.textMuted),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.noScheduleAssigned,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppConstants.textSecondary,
-                        ),
-                      ),
-                    ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header with back button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 4, 20, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: AppConstants.textPrimary),
+                    onPressed: () => context.pop(),
                   ),
-                )
-              : _buildScheduleView(context, state, l10n),
+                  Text(
+                    l10n.mySchedule,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppConstants.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.schedule == null
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.event_busy, size: 64, color: AppConstants.textMuted),
+                              const SizedBox(height: 16),
+                              Text(
+                                l10n.noScheduleAssigned,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: AppConstants.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _buildScheduleView(context, state, l10n),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -74,71 +100,101 @@ class ScheduleViewScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppConstants.paddingMD),
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppConstants.paddingMD),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _ScheduleRow(
-                  icon: Icons.badge_outlined,
-                  label: l10n.shiftName,
-                  value: shiftName,
+        // Shift info card
+        Container(
+          padding: const EdgeInsets.all(AppConstants.paddingMD),
+          decoration: BoxDecoration(
+            color: AppConstants.cardColor,
+            borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+            border: Border.all(color: AppConstants.borderColor, width: 0.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ScheduleRow(
+                icon: Icons.badge_outlined,
+                label: l10n.shiftName,
+                value: shiftName,
+              ),
+              Divider(height: 24, color: AppConstants.borderColor),
+              _ScheduleRow(
+                icon: Icons.login,
+                iconColor: AppConstants.clockInColor,
+                label: l10n.shiftStart,
+                value: _formatTime(startTime),
+              ),
+              const SizedBox(height: 8),
+              _ScheduleRow(
+                icon: Icons.logout,
+                iconColor: AppConstants.clockOutColor,
+                label: l10n.shiftEnd,
+                value: _formatTime(endTime),
+              ),
+              const SizedBox(height: 8),
+              _ScheduleRow(
+                icon: Icons.coffee_outlined,
+                label: l10n.breakDuration,
+                value: '${breakMinutes}m',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppConstants.paddingMD),
+
+        // Work days card
+        Container(
+          padding: const EdgeInsets.all(AppConstants.paddingMD),
+          decoration: BoxDecoration(
+            color: AppConstants.cardColor,
+            borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+            border: Border.all(color: AppConstants.borderColor, width: 0.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.workDays,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppConstants.textSecondary,
                 ),
-                const Divider(),
-                _ScheduleRow(
-                  icon: Icons.login,
-                  label: l10n.shiftStart,
-                  value: _formatTime(startTime),
-                ),
-                _ScheduleRow(
-                  icon: Icons.logout,
-                  label: l10n.shiftEnd,
-                  value: _formatTime(endTime),
-                ),
-                _ScheduleRow(
-                  icon: Icons.coffee_outlined,
-                  label: l10n.breakDuration,
-                  value: '${breakMinutes}m',
-                ),
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    l10n.workDays,
-                    style: TextStyle(
-                      color: AppConstants.textSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                Wrap(
-                  spacing: 8,
-                  children: List.generate(7, (index) {
-                    final dayNumber = index + 1;
-                    final isWorkDay = workDays.contains(dayNumber);
-                    return Chip(
-                      label: Text(dayNames[index]),
-                      backgroundColor: isWorkDay
-                          ? AppConstants.primaryColor.withValues(alpha: 0.15)
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(7, (index) {
+                  final dayNumber = index + 1;
+                  final isWorkDay = workDays.contains(dayNumber);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isWorkDay
+                          ? AppConstants.primaryColor.withValues(alpha: 0.1)
                           : AppConstants.inputColor,
-                      labelStyle: TextStyle(
-                        color: isWorkDay
-                            ? AppConstants.primaryColor
-                            : AppConstants.textMuted,
-                        fontWeight:
-                            isWorkDay ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      side: BorderSide(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
                         color: isWorkDay
                             ? AppConstants.primaryColor.withValues(alpha: 0.3)
                             : AppConstants.borderColor,
                       ),
-                    );
-                  }),
-                ),
-              ],
-            ),
+                    ),
+                    child: Text(
+                      dayNames[index],
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isWorkDay
+                            ? AppConstants.primaryColor
+                            : AppConstants.textMuted,
+                        fontWeight:
+                            isWorkDay ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
           ),
         ),
       ],
@@ -146,7 +202,6 @@ class ScheduleViewScreen extends ConsumerWidget {
   }
 
   String _formatTime(String time) {
-    // Handle "HH:MM:SS" format from DB
     if (time.contains(':') && time.length > 5) {
       return time.substring(0, 5);
     }
@@ -156,41 +211,41 @@ class ScheduleViewScreen extends ConsumerWidget {
 
 class _ScheduleRow extends StatelessWidget {
   final IconData icon;
+  final Color? iconColor;
   final String label;
   final String value;
 
   const _ScheduleRow({
     required this.icon,
+    this.iconColor,
     required this.label,
     required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: AppConstants.primaryColor, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: AppConstants.textSecondary,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          Text(
-            value,
+    return Row(
+      children: [
+        Icon(icon, color: iconColor ?? AppConstants.primaryColor, size: 22),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
             style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+              color: AppConstants.textSecondary,
+              fontSize: 14,
             ),
           ),
-        ],
-      ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppConstants.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 }

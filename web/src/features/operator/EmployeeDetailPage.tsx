@@ -7,7 +7,8 @@ import { useEmployee } from '../../hooks/useEmployees';
 import { useSessions } from '../../hooks/useSessions';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
-import { WorkSession, LeaveType, EmployeeLeaveEntitlement } from '../../types';
+import { WorkSession, LeaveType, EmployeeLeaveEntitlement, SpecialDayType } from '../../types';
+import { useSpecialDayTypes, useEmployeeSpecialDayTypes, useAssignSpecialDayType } from '../../hooks/useSpecialDayTypes';
 import { DataTable } from '../../components/shared/DataTable';
 import { formatMinutes } from '../../lib/utils';
 import { ArrowLeft, User, Save, Check } from 'lucide-react';
@@ -60,6 +61,15 @@ export function EmployeeDetailPage() {
     },
     enabled: !!id,
   });
+
+  // Fetch special day types
+  const { data: allSpecialDayTypes = [] } = useSpecialDayTypes(companyId);
+  const { data: employeeSpecialDayTypes = [] } = useEmployeeSpecialDayTypes(id);
+  const assignSpecialDayType = useAssignSpecialDayType();
+
+  // Non-applies_to_all types that need per-employee assignment
+  const assignableTypes = allSpecialDayTypes.filter((sdt) => !sdt.applies_to_all);
+  const assignedTypeIds = new Set(employeeSpecialDayTypes.map((e) => e.special_day_type_id));
 
   // Local state for editable entitlements
   const [entitlementValues, setEntitlementValues] = useState<Record<string, number>>({});
@@ -267,6 +277,55 @@ export function EmployeeDetailPage() {
                 </>
               )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Eligible Day Types */}
+      {assignableTypes.length > 0 && (
+        <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-800 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-white mb-4">
+            {t('specialDayTypes.eligibleTypes')}
+          </h2>
+          <div className="space-y-2">
+            {assignableTypes.map((sdt) => {
+              const isAssigned = assignedTypeIds.has(sdt.id);
+              return (
+                <div key={sdt.id} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
+                  <div>
+                    <span className="text-sm font-medium text-white">{sdt.name}</span>
+                    <span className="ml-2 text-xs text-zinc-500">({sdt.code})</span>
+                    <span className={`ml-2 px-1.5 py-0.5 rounded text-xs ${
+                      sdt.calculation_mode === 'rounding'
+                        ? 'bg-purple-500/10 text-purple-400'
+                        : 'bg-cyan-500/10 text-cyan-400'
+                    }`}>
+                      {sdt.calculation_mode === 'rounding'
+                        ? t('specialDayTypes.modeRounding')
+                        : t('specialDayTypes.modeFixedHours')}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!id) return;
+                      assignSpecialDayType.mutate({
+                        employee_ids: [id],
+                        special_day_type_id: sdt.id,
+                        action: isAssigned ? 'remove' : undefined,
+                      });
+                    }}
+                    disabled={assignSpecialDayType.isPending}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                      isAssigned
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20'
+                        : 'bg-zinc-700 text-zinc-400 hover:bg-amber-500/10 hover:text-amber-400'
+                    }`}
+                  >
+                    {isAssigned ? t('common.active') : t('specialDayTypes.assignTypes')}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

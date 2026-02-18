@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { getSupabaseClient } from "../_shared/supabase-client.ts";
+import { getSupabaseClient, getSupabaseAdmin } from "../_shared/supabase-client.ts";
 import { getAuthUser, requireRole } from "../_shared/auth.ts";
 
 serve(async (req) => {
@@ -14,8 +14,11 @@ serve(async (req) => {
     const user = await getAuthUser(supabase);
     requireRole(user, ["operator"]);
 
+    const supabaseAdmin = getSupabaseAdmin();
+
     const body = await req.json();
     const {
+      // Create action
       employee_ids,
       shift_template_id,
       custom_start_time,
@@ -24,8 +27,42 @@ serve(async (req) => {
       custom_work_days,
       effective_from,
       effective_to,
+      // Update action
+      action,
+      schedule_id,
     } = body;
 
+    // ─── Update existing schedule ──────────────────────────────────────
+    if (action === "update" && schedule_id) {
+      const updateFields: Record<string, any> = {};
+      if (effective_from !== undefined) updateFields.effective_from = effective_from;
+      if (effective_to !== undefined) updateFields.effective_to = effective_to || null;
+      if (shift_template_id !== undefined) updateFields.shift_template_id = shift_template_id || null;
+
+      if (Object.keys(updateFields).length === 0) {
+        throw new Error("No fields to update");
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from("employee_schedules")
+        .update(updateFields)
+        .eq("id", schedule_id)
+        .eq("company_id", user.company_id)
+        .select("*, shift_template:shift_templates(*)")
+        .single();
+
+      if (error) throw new Error(`Failed to update schedule: ${error.message}`);
+
+      return new Response(
+        JSON.stringify({ schedule: data }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // ─── Create new schedule(s) ────────────────────────────────────────
     if (!employee_ids || !Array.isArray(employee_ids) || employee_ids.length === 0) {
       throw new Error("employee_ids array is required");
     }
@@ -34,26 +71,13 @@ serve(async (req) => {
       throw new Error("Either shift_template_id or custom schedule times are required");
     }
 
+    const newEffectiveFrom = effective_from || new Date().toISOString().split("T")[0];
+
     const results = [];
     const errors = [];
 
     for (const empId of employee_ids) {
-      // End any currently active schedule for this employee
-      const { error: endError } = await supabase
-        .from("employee_schedules")
-        .update({
-          effective_to: effective_from || new Date().toISOString().split("T")[0],
-        })
-        .eq("employee_id", empId)
-        .is("effective_to", null);
-
-      if (endError) {
-        errors.push({ employee_id: empId, error: endError.message });
-        continue;
-      }
-
-      // Create new schedule
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("employee_schedules")
         .insert({
           employee_id: empId,
@@ -63,10 +87,10 @@ serve(async (req) => {
           custom_end_time: custom_end_time || null,
           custom_break_duration_minutes: custom_break_duration_minutes || null,
           custom_work_days: custom_work_days || null,
-          effective_from: effective_from || new Date().toISOString().split("T")[0],
+          effective_from: newEffectiveFrom,
           effective_to: effective_to || null,
         })
-        .select()
+        .select("*, shift_template:shift_templates(*)")
         .single();
 
       if (error) {

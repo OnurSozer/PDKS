@@ -4,38 +4,55 @@ import '../../home/providers/session_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/utils/date_utils.dart';
 
+class _DateCache {
+  final List<Map<String, dynamic>> sessions;
+  final Map<String, dynamic>? dailySummary;
+
+  _DateCache({required this.sessions, this.dailySummary});
+}
+
 class SessionHistoryState {
   final bool isLoading;
   final DateTime selectedDate;
-  final DateTime focusedMonth;
+  final int selectedYear;
+  final int selectedMonth;
   final List<Map<String, dynamic>> sessions;
   final Map<String, dynamic>? dailySummary;
+  final Map<String, String> monthDayStatuses; // "yyyy-MM-dd" -> "full"|"overtime"|"missing"|"leave"
   final String? error;
 
   SessionHistoryState({
     this.isLoading = false,
     DateTime? selectedDate,
-    DateTime? focusedMonth,
+    int? selectedYear,
+    int? selectedMonth,
     this.sessions = const [],
     this.dailySummary,
+    this.monthDayStatuses = const {},
     this.error,
   })  : selectedDate = selectedDate ?? DateTime.now(),
-        focusedMonth = focusedMonth ?? DateTime.now();
+        selectedYear = selectedYear ?? DateTime.now().year,
+        selectedMonth = selectedMonth ?? DateTime.now().month;
 
   SessionHistoryState copyWith({
     bool? isLoading,
     DateTime? selectedDate,
-    DateTime? focusedMonth,
+    int? selectedYear,
+    int? selectedMonth,
     List<Map<String, dynamic>>? sessions,
     Map<String, dynamic>? dailySummary,
+    bool clearDailySummary = false,
+    Map<String, String>? monthDayStatuses,
     String? error,
   }) {
     return SessionHistoryState(
       isLoading: isLoading ?? this.isLoading,
       selectedDate: selectedDate ?? this.selectedDate,
-      focusedMonth: focusedMonth ?? this.focusedMonth,
+      selectedYear: selectedYear ?? this.selectedYear,
+      selectedMonth: selectedMonth ?? this.selectedMonth,
       sessions: sessions ?? this.sessions,
-      dailySummary: dailySummary ?? this.dailySummary,
+      dailySummary: clearDailySummary ? null : (dailySummary ?? this.dailySummary),
+      monthDayStatuses: monthDayStatuses ?? this.monthDayStatuses,
       error: error,
     );
   }
@@ -44,44 +61,219 @@ class SessionHistoryState {
 class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
   final SessionRepository _repository;
   final String? _employeeId;
+  final Map<String, _DateCache> _cache = {};
+  int _prefetchedMonth = 0; // tracks which month we already bulk-fetched
+  int _prefetchedYear = 0;
 
   SessionHistoryNotifier(this._repository, this._employeeId)
       : super(SessionHistoryState()) {
     if (_employeeId != null) {
-      loadSessionsForDate(DateTime.now());
+      final now = DateTime.now();
+      // Pre-fetch entire month data, then show today
+      _prefetchMonth(now.year, now.month).then((_) {
+        loadSessionsForDate(now);
+      });
+      loadMonthStatuses(now.year, now.month);
+    }
+  }
+
+  /// Bulk-fetch all sessions + daily summaries for a month, filling the cache.
+  Future<void> _prefetchMonth(int year, int month) async {
+    if (_employeeId == null) return;
+    if (_prefetchedYear == year && _prefetchedMonth == month) return;
+
+    try {
+      final startDate = DateTime(year, month, 1);
+      final endDate = DateTime(year, month + 1, 0); // last day of month
+      final startStr = AppDateUtils.formatDate(startDate);
+      final endStr = AppDateUtils.formatDate(endDate);
+
+      // Fetch all sessions and all daily summaries for the month in parallel
+      final results = await Future.wait([
+        _repository.getSessionsByDateRange(
+          employeeId: _employeeId!,
+          startDate: startStr,
+          endDate: endStr,
+        ),
+        _repository.getMonthDailySummaries(_employeeId!, startDate),
+      ]);
+
+      final allSessions = results[0] as List<Map<String, dynamic>>;
+      final allSummaries = results[1] as List<Map<String, dynamic>>;
+
+      // Group sessions by date
+      final sessionsByDate = <String, List<Map<String, dynamic>>>{};
+      for (final session in allSessions) {
+        final dateStr = session['session_date'] as String;
+        sessionsByDate.putIfAbsent(dateStr, () => []).add(session);
+      }
+
+      // Index summaries by date
+      final summaryByDate = <String, Map<String, dynamic>>{};
+      for (final summary in allSummaries) {
+        final dateStr = summary['summary_date'] as String;
+        summaryByDate[dateStr] = summary;
+      }
+
+      // Fill cache for every day in the month
+      for (int day = 1; day <= endDate.day; day++) {
+        final d = DateTime(year, month, day);
+        final dateStr = AppDateUtils.formatDate(d);
+        _cache[dateStr] = _DateCache(
+          sessions: sessionsByDate[dateStr] ?? [],
+          dailySummary: summaryByDate[dateStr],
+        );
+      }
+
+      _prefetchedYear = year;
+      _prefetchedMonth = month;
+    } catch (_) {
+      // Prefetch failed — individual loads will still work as fallback
     }
   }
 
   Future<void> loadSessionsForDate(DateTime date) async {
     if (_employeeId == null) return;
-    state = state.copyWith(
-      isLoading: true,
-      selectedDate: date,
-      error: null,
-    );
+
+    final dateStr = AppDateUtils.formatDate(date);
+    final cached = _cache[dateStr];
+
+    if (cached != null) {
+      // Show cached data instantly
+      state = state.copyWith(
+        isLoading: false,
+        selectedDate: date,
+        sessions: cached.sessions,
+        dailySummary: cached.dailySummary,
+        clearDailySummary: cached.dailySummary == null,
+        error: null,
+      );
+      // Background refresh to catch any changes
+      _fetchAndUpdate(date, dateStr);
+    } else {
+      // No cache — show loading, fetch
+      state = state.copyWith(
+        isLoading: true,
+        selectedDate: date,
+        sessions: [],
+        clearDailySummary: true,
+        error: null,
+      );
+      await _fetchAndUpdate(date, dateStr);
+    }
+  }
+
+  Future<void> _fetchAndUpdate(DateTime date, String dateStr) async {
     try {
-      final dateStr = AppDateUtils.formatDate(date);
       final sessions = await _repository.getSessionsByDateRange(
-        employeeId: _employeeId,
+        employeeId: _employeeId!,
         startDate: dateStr,
         endDate: dateStr,
       );
       final summary = await _repository.getDailySummary(
-        employeeId: _employeeId,
+        employeeId: _employeeId!,
         date: dateStr,
       );
-      state = state.copyWith(
-        isLoading: false,
-        sessions: sessions,
-        dailySummary: summary,
-      );
+
+      // Update cache
+      _cache[dateStr] = _DateCache(sessions: sessions, dailySummary: summary);
+
+      // Only update state if still viewing this date
+      if (AppDateUtils.formatDate(state.selectedDate) == dateStr) {
+        state = state.copyWith(
+          isLoading: false,
+          sessions: sessions,
+          dailySummary: summary,
+          clearDailySummary: summary == null,
+        );
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      if (AppDateUtils.formatDate(state.selectedDate) == dateStr) {
+        state = state.copyWith(isLoading: false, error: e.toString());
+      }
+    }
+  }
+
+  Future<void> loadMonthStatuses(int year, int month) async {
+    if (_employeeId == null) return;
+    state = state.copyWith(
+      selectedYear: year,
+      selectedMonth: month,
+    );
+    try {
+      final monthDate = DateTime(year, month, 1);
+      final summaries = await _repository.getMonthDailySummaries(
+        _employeeId!,
+        monthDate,
+      );
+      final statuses = <String, String>{};
+      for (final s in summaries) {
+        final dateStr = s['summary_date'] as String;
+        final totalWork = s['total_work_minutes'] as int? ?? 0;
+        final expected = s['expected_work_minutes'] as int? ?? 0;
+        final overtime = s['total_overtime_minutes'] as int? ?? 0;
+        final dayStatus = s['status'] as String? ?? '';
+
+        if (dayStatus == 'leave') {
+          statuses[dateStr] = 'leave';
+        } else if (overtime > 0) {
+          statuses[dateStr] = 'overtime';
+        } else if (totalWork > 0 && totalWork >= expected) {
+          statuses[dateStr] = 'full';
+        } else if (totalWork > 0 && totalWork < expected) {
+          statuses[dateStr] = 'missing';
+        }
+      }
+      state = state.copyWith(monthDayStatuses: statuses);
+    } catch (_) {
+      // Silently fail — statuses are visual only
     }
   }
 
   void setFocusedMonth(DateTime month) {
-    state = state.copyWith(focusedMonth: month);
+    // Pre-fetch the new month's data when user swipes calendar
+    _prefetchMonth(month.year, month.month);
+    loadMonthStatuses(month.year, month.month);
+  }
+
+  Future<void> createManualSession({
+    required DateTime date,
+    required int startHour,
+    required int startMinute,
+    required int endHour,
+    required int endMinute,
+  }) async {
+    if (_employeeId == null) throw Exception('Not authenticated');
+
+    final dateStr = AppDateUtils.formatDate(date);
+    final clockIn = DateTime(date.year, date.month, date.day, startHour, startMinute);
+    final clockOut = DateTime(date.year, date.month, date.day, endHour, endMinute);
+
+    if (clockOut.isBefore(clockIn) || clockOut.isAtSameMomentAs(clockIn)) {
+      throw Exception('exit_before_entry');
+    }
+
+    await _repository.createManualSession(
+      sessionDate: dateStr,
+      clockIn: clockIn.toIso8601String(),
+      clockOut: clockOut.toIso8601String(),
+    );
+
+    // Invalidate cache for this date
+    _cache.remove(dateStr);
+
+    // Refresh data
+    await loadSessionsForDate(date);
+    await loadMonthStatuses(state.selectedYear, state.selectedMonth);
+  }
+
+  Future<void> deleteSession(String sessionId, DateTime date) async {
+    final dateStr = AppDateUtils.formatDate(date);
+    _cache.remove(dateStr);
+
+    await _repository.deleteSession(sessionId);
+    await loadSessionsForDate(date);
+    await loadMonthStatuses(state.selectedYear, state.selectedMonth);
   }
 }
 

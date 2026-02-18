@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_utils.dart';
@@ -7,8 +8,6 @@ import '../../auth/providers/auth_provider.dart';
 import '../providers/session_provider.dart';
 import '../widgets/clock_button.dart';
 import '../widgets/meal_ready_button.dart';
-import '../widgets/session_card.dart';
-import '../widgets/today_summary.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -118,99 +117,175 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final sessionState = ref.watch(sessionProvider);
     final l10n = AppLocalizations.of(context);
     final isChef = authState.profile?.isChef ?? false;
+    final now = DateTime.now();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.home),
-        actions: [
-          if (authState.profile != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: Text(
-                  authState.profile!.fullName,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-            ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(sessionProvider.notifier).loadTodayData(),
-        child: ListView(
-          children: [
-            const SizedBox(height: AppConstants.paddingLG),
-            // Status text
-            Center(
-              child: Text(
-                _getStatusText(sessionState, l10n),
-                style: TextStyle(
-                  fontSize: 16,
-                  color: sessionState.isClockedIn
-                      ? AppConstants.clockInColor
-                      : AppConstants.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppConstants.paddingLG),
-            // Clock button
-            Center(
-              child: ClockButton(
-                isClockedIn: sessionState.isClockedIn,
-                isLoading: sessionState.isLoading,
-                onPressed: () => _handleClockAction(sessionState, l10n),
-              ),
-            ),
-            const SizedBox(height: AppConstants.paddingLG),
-            // Meal Ready button (Chef only)
-            if (isChef)
-              MealReadyButton(
-                isLoading: sessionState.isLoading,
-                onPressed: () => _handleMealReady(l10n),
-              ),
-            // Today's summary
-            TodaySummary(summary: sessionState.dailySummary),
-            // Today's sessions
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.paddingMD,
-                vertical: AppConstants.paddingSM,
-              ),
-              child: Text(
-                l10n.todaySessions,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            if (sessionState.todaySessions.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(AppConstants.paddingLG),
-                child: Center(
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => ref.read(sessionProvider.notifier).loadTodayData(),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Header height estimate (welcome row + padding)
+              const headerHeight = 80.0;
+              final centerAreaHeight = constraints.maxHeight - headerHeight;
+
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.event_busy,
-                        size: 48,
-                        color: AppConstants.textMuted,
+                      // Welcome header — stays at top
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.welcomeBack.toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppConstants.primaryColor,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  authState.profile?.firstName ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppConstants.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundColor: AppConstants.primaryColor.withValues(alpha: 0.1),
+                              child: Text(
+                                authState.profile != null && authState.profile!.firstName.isNotEmpty
+                                    ? authState.profile!.firstName[0].toUpperCase()
+                                    : '',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppConstants.primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.noSessionsToday,
-                        style: TextStyle(color: AppConstants.textSecondary),
+
+                      // Centered content area
+                      Container(
+                        constraints: BoxConstraints(minHeight: centerAreaHeight),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Clock display — time and AM/PM on same row
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(
+                                  DateFormat('hh:mm').format(now),
+                                  style: const TextStyle(
+                                    fontSize: 56,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppConstants.textPrimary,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  DateFormat('a').format(now),
+                                  style: const TextStyle(
+                                    fontSize: 56,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppConstants.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              DateFormat('EEEE, MMMM d').format(now),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: AppConstants.textSecondary,
+                              ),
+                            ),
+
+                            // Status badge
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: sessionState.isClockedIn
+                                    ? AppConstants.clockInColor.withValues(alpha: 0.1)
+                                    : AppConstants.textMuted.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: sessionState.isClockedIn
+                                          ? AppConstants.clockInColor
+                                          : AppConstants.textMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _getStatusText(sessionState, l10n),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: sessionState.isClockedIn
+                                          ? AppConstants.clockInColor
+                                          : AppConstants.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Clock button
+                            const SizedBox(height: 36),
+                            ClockButton(
+                              isClockedIn: sessionState.isClockedIn,
+                              isLoading: sessionState.isLoading,
+                              onPressed: () => _handleClockAction(sessionState, l10n),
+                            ),
+                            const SizedBox(height: 28),
+
+                            // Meal Ready button (Chef only)
+                            if (isChef)
+                              MealReadyButton(
+                                isLoading: sessionState.isLoading,
+                                onPressed: () => _handleMealReady(l10n),
+                              ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              )
-            else
-              ...sessionState.todaySessions.map(
-                (session) => SessionCard(session: session),
-              ),
-            const SizedBox(height: AppConstants.paddingLG),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );

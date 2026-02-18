@@ -23,7 +23,6 @@ class _RecordLeaveScreenState extends ConsumerState<RecordLeaveScreen> {
   @override
   void initState() {
     super.initState();
-    // Ensure leave types are loaded when navigating directly to this screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = ref.read(leaveProvider);
       if (state.leaveTypes.isEmpty && !state.isLoading) {
@@ -104,26 +103,40 @@ class _RecordLeaveScreenState extends ConsumerState<RecordLeaveScreen> {
     // Show loading if leave types haven't loaded yet
     if (state.isLoading && state.leaveTypes.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.recordLeave)),
-        body: const Center(child: CircularProgressIndicator()),
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(l10n),
+              const Expanded(child: Center(child: CircularProgressIndicator())),
+            ],
+          ),
+        ),
       );
     }
 
     // Show error if loading failed
     if (state.error != null && state.leaveTypes.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.recordLeave)),
-        body: Center(
+        body: SafeArea(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppConstants.clockOutColor),
-              const SizedBox(height: 16),
-              Text(state.error!, style: const TextStyle(color: AppConstants.textSecondary)),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.read(leaveProvider.notifier).loadAll(),
-                child: Text(l10n.retry),
+              _buildHeader(l10n),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, size: 48, color: AppConstants.clockOutColor),
+                      const SizedBox(height: 16),
+                      Text(state.error!, style: const TextStyle(color: AppConstants.textSecondary)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => ref.read(leaveProvider.notifier).loadAll(),
+                        child: Text(l10n.retry),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -131,19 +144,27 @@ class _RecordLeaveScreenState extends ConsumerState<RecordLeaveScreen> {
       );
     }
 
-    // Show message if no leave types configured for this company
+    // Show message if no leave types configured
     if (state.leaveTypes.isEmpty && !state.isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.recordLeave)),
-        body: Center(
+        body: SafeArea(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.info_outline, size: 48, color: AppConstants.textMuted),
-              const SizedBox(height: 16),
-              Text(
-                l10n.noLeaveTypes,
-                style: const TextStyle(color: AppConstants.textSecondary, fontSize: 16),
+              _buildHeader(l10n),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.info_outline, size: 48, color: AppConstants.textMuted),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.noLeaveTypes,
+                        style: const TextStyle(color: AppConstants.textSecondary, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -152,116 +173,185 @@ class _RecordLeaveScreenState extends ConsumerState<RecordLeaveScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.recordLeave),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(AppConstants.paddingMD),
+      body: SafeArea(
+        child: Column(
           children: [
-            // Leave Type Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedLeaveTypeId,
-              dropdownColor: AppConstants.surfaceColor,
-              decoration: InputDecoration(
-                labelText: l10n.leaveType,
-                prefixIcon: const Icon(Icons.category_outlined),
-              ),
-              items: state.leaveTypes
-                  .map((type) => DropdownMenuItem<String>(
-                        value: type['id'] as String,
-                        child: Text(type['name'] as String),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() => _selectedLeaveTypeId = value);
-              },
-              validator: (value) =>
-                  value == null ? '${l10n.leaveType} is required' : null,
-            ),
-            const SizedBox(height: AppConstants.paddingMD),
-
-            // Start Date
-            _DateField(
-              label: l10n.startDate,
-              date: _startDate,
-              onTap: () => _selectDate(context, true),
-            ),
-            const SizedBox(height: AppConstants.paddingMD),
-
-            // End Date
-            _DateField(
-              label: l10n.endDate,
-              date: _endDate,
-              onTap: () => _selectDate(context, false),
-            ),
-            const SizedBox(height: AppConstants.paddingMD),
-
-            // Total days display
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppConstants.paddingMD),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+            _buildHeader(l10n),
+            Expanded(
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(AppConstants.paddingMD),
                   children: [
-                    const Icon(Icons.calendar_today, color: AppConstants.leaveColor),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${l10n.totalDays}: $_totalDays',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppConstants.leaveColor,
+                    // Leave Type Dropdown
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppConstants.cardColor,
+                        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                        border: Border.all(color: AppConstants.borderColor, width: 0.5),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedLeaveTypeId,
+                        dropdownColor: AppConstants.cardColor,
+                        decoration: InputDecoration(
+                          labelText: l10n.leaveType,
+                          prefixIcon: const Icon(Icons.category_outlined, color: AppConstants.textMuted),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                        ),
+                        items: state.leaveTypes
+                            .map((type) => DropdownMenuItem<String>(
+                                  value: type['id'] as String,
+                                  child: Text(type['name'] as String),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() => _selectedLeaveTypeId = value);
+                        },
+                        validator: (value) =>
+                            value == null ? '${l10n.leaveType} is required' : null,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.paddingMD),
+
+                    // Date pickers row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _DateField(
+                            label: l10n.startDate,
+                            date: _startDate,
+                            onTap: () => _selectDate(context, true),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _DateField(
+                            label: l10n.endDate,
+                            date: _endDate,
+                            onTap: () => _selectDate(context, false),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppConstants.paddingMD),
+
+                    // Total days display
+                    Container(
+                      padding: const EdgeInsets.all(AppConstants.paddingMD),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppConstants.leaveColor.withValues(alpha: 0.1),
+                            AppConstants.leaveColor.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                        border: Border.all(color: AppConstants.leaveColor.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.calendar_today, color: AppConstants.leaveColor, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${l10n.totalDays}: $_totalDays',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppConstants.leaveColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.paddingMD),
+
+                    // Reason
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppConstants.cardColor,
+                        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                        border: Border.all(color: AppConstants.borderColor, width: 0.5),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: TextFormField(
+                        controller: _reasonController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          labelText: l10n.reasonOptional,
+                          prefixIcon: const Padding(
+                            padding: EdgeInsets.only(bottom: 48),
+                            child: Icon(Icons.notes_outlined, color: AppConstants.textMuted),
+                          ),
+                          alignLabelWithHint: true,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.paddingLG),
+
+                    // Submit button
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: state.isLoading ? null : _handleSubmit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppConstants.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppConstants.borderRadiusSM),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: state.isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                l10n.save,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: AppConstants.paddingMD),
-
-            // Reason
-            TextFormField(
-              controller: _reasonController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: l10n.reasonOptional,
-                prefixIcon: const Icon(Icons.notes_outlined),
-                alignLabelWithHint: true,
-              ),
-            ),
-            const SizedBox(height: AppConstants.paddingLG),
-
-            // Submit button
-            SizedBox(
-              height: 52,
-              child: ElevatedButton(
-                onPressed: state.isLoading ? null : _handleSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.primaryColor,
-                  foregroundColor: Colors.black,
-                ),
-                child: state.isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.black,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        l10n.save,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 20, 0),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppConstants.textPrimary),
+            onPressed: () => context.pop(),
+          ),
+          Text(
+            l10n.recordLeave,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppConstants.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -282,14 +372,40 @@ class _DateField extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: const Icon(Icons.date_range_outlined),
+      borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppConstants.cardColor,
+          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+          border: Border.all(color: AppConstants.borderColor, width: 0.5),
         ),
-        child: Text(
-          AppDateUtils.formatDisplayDate(date),
-          style: const TextStyle(fontSize: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppConstants.textMuted,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.date_range_outlined, size: 18, color: AppConstants.primaryColor),
+                const SizedBox(width: 6),
+                Text(
+                  AppDateUtils.formatDisplayDate(date),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

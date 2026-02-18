@@ -8,9 +8,9 @@ import { ColumnDef } from '@tanstack/react-table';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useEmployees } from '../../hooks/useEmployees';
-import { ShiftTemplate } from '../../types';
+import { ShiftTemplate, EmployeeSchedule } from '../../types';
 import { DataTable } from '../../components/shared/DataTable';
-import { Plus, X, Calendar } from 'lucide-react';
+import { Plus, X, Calendar, Pencil } from 'lucide-react';
 
 const DAY_OPTIONS = [
   { value: 1, labelKey: 'days.monday' },
@@ -44,6 +44,11 @@ export function SchedulesPage() {
   const [assignEmployeeId, setAssignEmployeeId] = useState('');
   const [assignEffectiveFrom, setAssignEffectiveFrom] = useState(new Date().toISOString().split('T')[0]);
 
+  // Edit schedule state
+  const [editingSchedule, setEditingSchedule] = useState<EmployeeSchedule | null>(null);
+  const [editEffectiveFrom, setEditEffectiveFrom] = useState('');
+  const [editEffectiveTo, setEditEffectiveTo] = useState('');
+
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['shift-templates', companyId],
     queryFn: async () => {
@@ -59,6 +64,21 @@ export function SchedulesPage() {
   });
 
   const { data: employees = [] } = useEmployees(companyId);
+
+  // Fetch all employee schedules
+  const { data: employeeSchedules = [], isLoading: schedulesLoading } = useQuery({
+    queryKey: ['employee-schedules', companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_schedules')
+        .select('*, shift_template:shift_templates(*)')
+        .eq('company_id', companyId!)
+        .order('effective_from', { ascending: false });
+      if (error) throw error;
+      return data as EmployeeSchedule[];
+    },
+    enabled: !!companyId,
+  });
 
   const {
     register,
@@ -95,13 +115,15 @@ export function SchedulesPage() {
 
   const assignMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('employee_schedules').insert({
-        employee_id: assignEmployeeId,
-        company_id: companyId,
-        shift_template_id: assignTemplateId,
-        effective_from: assignEffectiveFrom,
+      const { data, error } = await supabase.functions.invoke('assign-schedule', {
+        body: {
+          employee_ids: [assignEmployeeId],
+          shift_template_id: assignTemplateId,
+          effective_from: assignEffectiveFrom,
+        },
       });
       if (error) throw error;
+      if (data?.errors?.length > 0) throw new Error(data.errors[0].error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-schedules'] });
@@ -110,6 +132,32 @@ export function SchedulesPage() {
       setAssignEmployeeId('');
     },
   });
+
+  const editMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingSchedule) return;
+      const { data, error } = await supabase.functions.invoke('assign-schedule', {
+        body: {
+          action: 'update',
+          schedule_id: editingSchedule.id,
+          effective_from: editEffectiveFrom,
+          effective_to: editEffectiveTo || null,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-schedules'] });
+      setEditingSchedule(null);
+    },
+  });
+
+  const openEditModal = (schedule: EmployeeSchedule) => {
+    setEditingSchedule(schedule);
+    setEditEffectiveFrom(schedule.effective_from);
+    setEditEffectiveTo(schedule.effective_to || '');
+  };
 
   const toggleDay = (day: number) => {
     const current = workDays || [];
@@ -128,6 +176,12 @@ export function SchedulesPage() {
     6: t('days.saturdayShort'),
     7: t('days.sundayShort'),
   };
+
+  // Build employee name lookup
+  const employeeNameMap: Record<string, string> = {};
+  for (const emp of employees) {
+    employeeNameMap[emp.id] = `${emp.first_name} ${emp.last_name}`;
+  }
 
   const inputClasses = "mt-1 block w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-sm";
 
@@ -161,6 +215,58 @@ export function SchedulesPage() {
         >
           <Calendar className="w-4 h-4" />
           {t('schedules.assignSchedule')}
+        </button>
+      ),
+      enableSorting: false,
+    },
+  ];
+
+  const scheduleColumns: ColumnDef<EmployeeSchedule, any>[] = [
+    {
+      accessorKey: 'employee_id',
+      header: t('schedules.employee'),
+      cell: ({ getValue }) => employeeNameMap[getValue() as string] || getValue(),
+    },
+    {
+      id: 'template_name',
+      header: t('schedules.template'),
+      cell: ({ row }) => row.original.shift_template?.name || t('schedules.customSchedule'),
+    },
+    {
+      accessorKey: 'effective_from',
+      header: t('schedules.effectiveFrom'),
+    },
+    {
+      accessorKey: 'effective_to',
+      header: t('schedules.effectiveTo'),
+      cell: ({ getValue }) => {
+        const val = getValue() as string | null;
+        return val || (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            {t('schedules.ongoing')}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'work_days_display',
+      header: t('schedules.workDays'),
+      cell: ({ row }) => {
+        const tmpl = row.original.shift_template;
+        const days = tmpl?.work_days || row.original.custom_work_days || [];
+        return days.map((d) => dayLabelsShort[d]).join(', ') || '-';
+      },
+    },
+    {
+      id: 'actions',
+      header: t('common.actions'),
+      cell: ({ row }) => (
+        <button
+          onClick={() => openEditModal(row.original)}
+          className="inline-flex items-center gap-1 text-sm text-amber-500 hover:text-amber-400 transition-colors"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+          {t('common.edit')}
         </button>
       ),
       enableSorting: false,
@@ -257,7 +363,7 @@ export function SchedulesPage() {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300">{t('sessions.employee')} *</label>
+                <label className="block text-sm font-medium text-zinc-300">{t('schedules.employee')} *</label>
                 <select
                   value={assignEmployeeId}
                   onChange={(e) => setAssignEmployeeId(e.target.value)}
@@ -297,6 +403,73 @@ export function SchedulesPage() {
         </div>
       )}
 
+      {/* Edit schedule modal */}
+      {editingSchedule && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditingSchedule(null)} />
+          <div className="relative bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">{t('schedules.editSchedule')}</h2>
+              <button onClick={() => setEditingSchedule(null)} className="text-zinc-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              {/* Employee name (read-only) */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300">{t('schedules.employee')}</label>
+                <p className="mt-1 px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-400 text-sm">
+                  {employeeNameMap[editingSchedule.employee_id] || editingSchedule.employee_id}
+                </p>
+              </div>
+              {/* Template name (read-only) */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300">{t('schedules.template')}</label>
+                <p className="mt-1 px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-400 text-sm">
+                  {editingSchedule.shift_template?.name || t('schedules.customSchedule')}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300">{t('schedules.effectiveFrom')} *</label>
+                  <input
+                    type="date"
+                    value={editEffectiveFrom}
+                    onChange={(e) => setEditEffectiveFrom(e.target.value)}
+                    className={inputClasses}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300">{t('schedules.effectiveTo')}</label>
+                  <input
+                    type="date"
+                    value={editEffectiveTo}
+                    onChange={(e) => setEditEffectiveTo(e.target.value)}
+                    className={inputClasses}
+                  />
+                  {!editEffectiveTo && (
+                    <p className="mt-1 text-xs text-emerald-400">{t('schedules.ongoing')}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button onClick={() => setEditingSchedule(null)} className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors">
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={() => editMutation.mutate()}
+                  disabled={editMutation.isPending}
+                  className="px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all"
+                >
+                  {editMutation.isPending ? t('common.loading') : t('common.save')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shift Templates table */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
@@ -304,6 +477,20 @@ export function SchedulesPage() {
       ) : (
         <DataTable data={templates} columns={columns} searchPlaceholder={`${t('common.search')}...`} />
       )}
+
+      {/* Employee Schedules table */}
+      <div className="mt-10">
+        <h2 className="text-xl font-bold font-display text-white mb-4">{t('schedules.employeeSchedules')}</h2>
+        {schedulesLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+          </div>
+        ) : employeeSchedules.length === 0 ? (
+          <p className="text-zinc-500 text-sm py-8 text-center">{t('schedules.noSchedules')}</p>
+        ) : (
+          <DataTable data={employeeSchedules} columns={scheduleColumns} searchPlaceholder={`${t('common.search')}...`} />
+        )}
+      </div>
     </div>
   );
 }

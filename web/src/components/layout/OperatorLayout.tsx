@@ -16,6 +16,8 @@ import {
   LogOut,
   Menu,
   X,
+  CalendarDays,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 const navItems = [
@@ -25,7 +27,9 @@ const navItems = [
   { path: '/operator/schedules', icon: Calendar, labelKey: 'nav.schedules' },
   { path: '/operator/overtime', icon: Timer, labelKey: 'nav.overtime' },
   { path: '/operator/leave', icon: Palmtree, labelKey: 'nav.leave' },
+  { path: '/operator/holidays', icon: CalendarDays, labelKey: 'nav.holidays' },
   { path: '/operator/reports', icon: BarChart3, labelKey: 'nav.reports' },
+  { path: '/operator/monthly-summary', icon: FileSpreadsheet, labelKey: 'nav.monthlySummary' },
   { path: '/operator/settings', icon: Settings, labelKey: 'nav.settings' },
 ];
 

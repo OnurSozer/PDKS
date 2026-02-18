@@ -18,102 +18,120 @@ class SessionCard extends StatelessWidget {
     final totalMinutes = session['total_minutes'] as int?;
     final isActive = status == 'active';
 
-    final accentColor = switch (status) {
-      'active' => AppConstants.clockInColor,
-      'completed' => AppConstants.primaryColor,
-      'edited' => AppConstants.overtimeColor,
-      'cancelled' => AppConstants.clockOutColor,
-      _ => AppConstants.textMuted,
-    };
+    // Date badge text
+    final dayLabel = AppDateUtils.isToday(clockIn)
+        ? l10n.today
+        : AppDateUtils.isYesterday(clockIn)
+            ? l10n.yesterday
+            : AppDateUtils.formatShortWeekday(clockIn);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.symmetric(
         horizontal: AppConstants.paddingMD,
         vertical: AppConstants.paddingXS,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.paddingMD),
-        child: Row(
-          children: [
-            Container(
-              width: 4,
-              height: 50,
-              decoration: BoxDecoration(
-                color: accentColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      padding: const EdgeInsets.all(AppConstants.paddingMD),
+      decoration: BoxDecoration(
+        color: AppConstants.cardColor,
+        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+        border: Border.all(color: AppConstants.borderColor, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          // Date badge
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: AppConstants.paddingMD),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.login,
-                        size: 16,
-                        color: AppConstants.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        AppDateUtils.formatTime(clockIn),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (clockOut != null) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Icon(Icons.arrow_forward, size: 14, color: AppConstants.textMuted),
-                        ),
-                        Icon(
-                          Icons.logout,
-                          size: 16,
-                          color: AppConstants.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          AppDateUtils.formatTime(clockOut),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      _StatusBadge(status: status, l10n: l10n),
-                      if (totalMinutes != null) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          AppDateUtils.formatDuration(totalMinutes),
-                          style: TextStyle(
-                            color: AppConstants.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            if (isActive)
-              Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppConstants.clockInColor,
+            child: Center(
+              child: Text(
+                dayLabel.length > 3 ? dayLabel.substring(0, 3) : dayLabel,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppConstants.primaryColor,
                 ),
               ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Time info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dayLabel,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      AppDateUtils.formatTime(clockIn),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppConstants.textSecondary,
+                      ),
+                    ),
+                    if (clockOut != null) ...[
+                      Text(
+                        '  -  ',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppConstants.textMuted,
+                        ),
+                      ),
+                      Text(
+                        AppDateUtils.formatTime(clockOut),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppConstants.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Status + Duration column
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _StatusBadge(status: status, l10n: l10n),
+              if (totalMinutes != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  AppDateUtils.formatDuration(totalMinutes),
+                  style: const TextStyle(
+                    color: AppConstants.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (isActive) ...[
+            const SizedBox(width: 8),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppConstants.clockInColor,
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -127,26 +145,26 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (status) {
-      'active' => (l10n.active, AppConstants.clockInColor),
-      'completed' => (l10n.completed, AppConstants.primaryColor),
-      'edited' => (l10n.edited, AppConstants.overtimeColor),
-      'cancelled' => (l10n.cancelled, AppConstants.clockOutColor),
-      _ => (status, AppConstants.textMuted),
+    final (label, bgColor, textColor) = switch (status) {
+      'active' => (l10n.active, AppConstants.clockInColor.withValues(alpha: 0.1), AppConstants.clockInColor),
+      'completed' => ('ON TIME', AppConstants.clockInColor.withValues(alpha: 0.1), AppConstants.clockInColor),
+      'edited' => (l10n.edited, AppConstants.overtimeColor.withValues(alpha: 0.1), AppConstants.overtimeColor),
+      'cancelled' => (l10n.cancelled, AppConstants.errorColor.withValues(alpha: 0.1), AppConstants.errorColor),
+      _ => (status, AppConstants.textMuted.withValues(alpha: 0.1), AppConstants.textMuted),
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
+          fontWeight: FontWeight.w700,
+          color: textColor,
         ),
       ),
     );
