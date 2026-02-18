@@ -83,7 +83,8 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
 
-  AuthNotifier(this._repository) : super(const AuthState()) {
+  AuthNotifier(this._repository)
+      : super(AuthState(isLoading: _repository.currentSession != null)) {
     _init();
   }
 

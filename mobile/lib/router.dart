@@ -17,17 +17,35 @@ import 'features/profile/screens/schedule_view_screen.dart';
 // Locale provider for language switching
 final localeProvider = StateProvider<Locale>((ref) => const Locale('tr'));
 
+/// Bridges Riverpod auth state changes to a [ChangeNotifier] so GoRouter
+/// can re-evaluate its redirect without being fully recreated.
+class _AuthNotifierBridge extends ChangeNotifier {
+  _AuthNotifierBridge(Ref ref) {
+    ref.listen<AuthState>(authProvider, (_, __) => notifyListeners());
+  }
+}
+
+final _authNotifierBridgeProvider = Provider<_AuthNotifierBridge>((ref) {
+  return _AuthNotifierBridge(ref);
+});
+
 // Navigation shell
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final notifier = ref.watch(_authNotifierBridgeProvider);
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/home',
+    refreshListenable: notifier,
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
+
+      // While auth is loading (restoring session), stay on current route
+      if (authState.isLoading) return null;
+
       final isLoggedIn = authState.isAuthenticated;
       final isLoginRoute = state.matchedLocation == '/login';
 
