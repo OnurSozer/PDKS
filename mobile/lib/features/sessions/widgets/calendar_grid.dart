@@ -96,8 +96,6 @@ class CalendarGrid extends StatelessWidget {
                     borderWidth = 2;
                   }
 
-                  final emoji = _statusEmoji(status);
-
                   return Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(2),
@@ -135,29 +133,17 @@ class CalendarGrid extends StatelessWidget {
                                                 : AppConstants.textPrimary,
                                   ),
                                 ),
-                                // Dot + emoji offset below the centered number
+                                // Dot below the centered number
                                 if (status != null && !isToday)
                                   Transform.translate(
-                                    offset: const Offset(0, 18),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 5,
-                                          height: 5,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: _statusColor(status),
-                                          ),
-                                        ),
-                                        if (emoji != null) ...[
-                                          const SizedBox(height: 5),
-                                          Text(
-                                            emoji,
-                                            style: const TextStyle(fontSize: 8, height: 1),
-                                          ),
-                                        ],
-                                      ],
+                                    offset: const Offset(0, 12),
+                                    child: Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: _statusColor(status),
+                                      ),
                                     ),
                                   ),
                               ],
@@ -228,17 +214,4 @@ class CalendarGrid extends StatelessWidget {
     }
   }
 
-  String? _statusEmoji(String? status) {
-    switch (status) {
-      case 'leave':
-        return '\u{1F334}'; // 🌴
-      case 'sick_leave':
-        return '\u{1F3E5}'; // 🏥
-      case 'holiday':
-      case 'half_holiday':
-        return '\u{1F389}'; // 🎉
-      default:
-        return null;
-    }
-  }
 }

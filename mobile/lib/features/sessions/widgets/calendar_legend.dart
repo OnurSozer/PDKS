@@ -34,17 +34,14 @@ class CalendarLegend extends StatelessWidget {
           _LegendItem(
             color: AppConstants.leaveColor,
             label: l10n.leave,
-            emoji: '\u{1F334}',
           ),
           _LegendItem(
             color: AppConstants.sickLeaveColor,
             label: l10n.sickLeave,
-            emoji: '\u{1F3E5}',
           ),
           _LegendItem(
             color: AppConstants.holidayColor,
             label: l10n.holiday,
-            emoji: '\u{1F389}',
           ),
         ],
         ),
@@ -56,9 +53,8 @@ class CalendarLegend extends StatelessWidget {
 class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;
-  final String? emoji;
 
-  const _LegendItem({required this.color, required this.label, this.emoji});
+  const _LegendItem({required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +70,6 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        if (emoji != null) ...[
-          Text(emoji!, style: const TextStyle(fontSize: 10)),
-          const SizedBox(width: 3),
-        ],
         Text(
           label,
           style: const TextStyle(
