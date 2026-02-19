@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -17,10 +18,16 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
+  late Timer _clockTimer;
+  DateTime _now = DateTime.now();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() => _now = DateTime.now());
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkMissedClockOut();
     });
@@ -28,6 +35,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
   @override
   void dispose() {
+    _clockTimer.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -117,7 +125,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final sessionState = ref.watch(sessionProvider);
     final l10n = AppLocalizations.of(context);
     final isChef = authState.profile?.isChef ?? false;
-    final now = DateTime.now();
+    final now = _now;
 
     return Scaffold(
       body: SafeArea(
@@ -189,31 +197,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Clock display — time and AM/PM on same row
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
-                              children: [
-                                Text(
-                                  DateFormat('hh:mm').format(now),
-                                  style: const TextStyle(
-                                    fontSize: 56,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppConstants.textPrimary,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  DateFormat('a', Localizations.localeOf(context).languageCode).format(now),
-                                  style: const TextStyle(
-                                    fontSize: 56,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppConstants.textPrimary,
-                                  ),
-                                ),
-                              ],
+                            // Clock display — 24h format
+                            Text(
+                              DateFormat('HH:mm').format(now),
+                              style: const TextStyle(
+                                fontSize: 56,
+                                fontWeight: FontWeight.w800,
+                                color: AppConstants.textPrimary,
+                                letterSpacing: 2,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
