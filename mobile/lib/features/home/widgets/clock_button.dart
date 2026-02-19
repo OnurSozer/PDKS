@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/l10n/app_localizations.dart';
 
 class ClockButton extends StatelessWidget {
   final bool isClockedIn;
@@ -15,7 +16,9 @@ class ClockButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtitle = isClockedIn ? 'CHECK OUT' : 'CHECK IN';
+    final l10n = AppLocalizations.of(context);
+    final title = isClockedIn ? l10n.clockOutButtonTitle : l10n.clockInButtonTitle;
+    final subtitle = isClockedIn ? l10n.clockOutButtonSubtitle : l10n.clockInButtonSubtitle;
 
     // Purple gradient for clock-in, red gradient for clock-out
     final colors = isClockedIn
@@ -53,7 +56,7 @@ class ClockButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    isClockedIn ? 'Stop' : 'Start',
+                    title,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 28,

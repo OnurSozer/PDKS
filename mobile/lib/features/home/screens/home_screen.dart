@@ -206,7 +206,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  DateFormat('a').format(now),
+                                  DateFormat('a', Localizations.localeOf(context).languageCode).format(now),
                                   style: const TextStyle(
                                     fontSize: 56,
                                     fontWeight: FontWeight.w800,
@@ -217,7 +217,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              DateFormat('EEEE, MMMM d').format(now),
+                              DateFormat('EEEE, MMMM d', Localizations.localeOf(context).languageCode).format(now),
                               style: const TextStyle(
                                 fontSize: 15,
                                 color: AppConstants.textSecondary,

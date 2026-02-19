@@ -71,6 +71,10 @@ class AppLocalizations {
   String get clockInSuccess => get('clock_in_success');
   String get clockOutSuccess => get('clock_out_success');
   String get alreadyClockedIn => get('already_clocked_in');
+  String get clockInButtonTitle => get('clock_in_button_title');
+  String get clockOutButtonTitle => get('clock_out_button_title');
+  String get clockInButtonSubtitle => get('clock_in_button_subtitle');
+  String get clockOutButtonSubtitle => get('clock_out_button_subtitle');
 
   // ---- Sessions ----
   String get sessions => get('sessions');
@@ -320,6 +324,10 @@ class AppLocalizations {
     'clock_out': 'Clock Out',
     'clocked_in_since': 'Clocked in since',
     'not_clocked_in': 'You are clocked out',
+    'clock_in_button_title': 'Start',
+    'clock_out_button_title': 'Stop',
+    'clock_in_button_subtitle': 'CHECK IN',
+    'clock_out_button_subtitle': 'CHECK OUT',
     'today_sessions': "Today's Sessions",
     'today_summary': "Today's Summary",
     'total_hours': 'Total',
@@ -565,6 +573,10 @@ class AppLocalizations {
     'clock_out': 'Çıkış Yap',
     'clocked_in_since': 'Giriş saati',
     'not_clocked_in': 'Giriş yapılmadı',
+    'clock_in_button_title': 'Başlat',
+    'clock_out_button_title': 'Durdur',
+    'clock_in_button_subtitle': 'GİRİŞ YAP',
+    'clock_out_button_subtitle': 'ÇIKIŞ YAP',
     'today_sessions': 'Bugünün Oturumları',
     'today_summary': 'Bugünün Özeti',
     'total_hours': 'Toplam',
