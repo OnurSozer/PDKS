@@ -19,6 +19,7 @@ import {
   CalendarDays,
   FileSpreadsheet,
   ScrollText,
+  Bell,
 } from 'lucide-react';
 
 const navItems = [
@@ -32,6 +33,7 @@ const navItems = [
   { path: '/operator/reports', icon: BarChart3, labelKey: 'nav.reports' },
   { path: '/operator/monthly-summary', icon: FileSpreadsheet, labelKey: 'nav.monthlySummary' },
   { path: '/operator/activity-log', icon: ScrollText, labelKey: 'nav.activityLog' },
+  { path: '/operator/notifications', icon: Bell, labelKey: 'nav.notifications' },
   { path: '/operator/settings', icon: Settings, labelKey: 'nav.settings' },
 ];
 

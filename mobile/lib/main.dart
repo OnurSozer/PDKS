@@ -23,7 +23,7 @@ Future<void> main() async {
     await NotificationService.initialize();
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
-    // App can work without push notifications
+    NotificationService.markInitFailed();
   }
 
   // Load saved preferences

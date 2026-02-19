@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/auth_repository.dart';
+import '../../../core/services/notification_service.dart';
 
 // Auth repository provider
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -130,6 +131,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
           profile: profile,
           isLoading: false,
         );
+        // Register device token for push notifications (employees & chefs)
+        if (profile.isMobileUser) {
+          NotificationService.registerToken();
+        }
       } else {
         state = state.copyWith(isLoading: false, error: 'Profile not found');
       }

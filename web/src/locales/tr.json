@@ -36,6 +36,7 @@
     "reports": "Raporlar",
     "monthlySummary": "Aylık Özet",
     "activityLog": "Aktivite Günlüğü",
+    "notifications": "Bildirimler",
     "settings": "Ayarlar"
   },
   "common": {
@@ -359,6 +360,21 @@
     "fridayShort": "Cum",
     "saturdayShort": "Cmt",
     "sundayShort": "Paz"
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "send": "Bildirim Gönder",
+    "notificationTitle": "Başlık",
+    "body": "Mesaj",
+    "selectEmployees": "Çalışan Seç (boş = tümü)",
+    "allEmployees": "Tüm Çalışanlar",
+    "sendButton": "Gönder",
+    "sentSuccess": "Bildirim başarıyla gönderildi",
+    "history": "Bildirim Geçmişi",
+    "recipients": "Alıcılar",
+    "sentBy": "Gönderen",
+    "date": "Tarih",
+    "noHistory": "Henüz bildirim gönderilmedi"
   },
   "language": {
     "tr": "Türkçe",

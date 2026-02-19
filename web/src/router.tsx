@@ -27,6 +27,7 @@ import { HolidaysPage } from './features/operator/HolidaysPage';
 import { MonthlySummaryPage } from './features/operator/MonthlySummaryPage';
 import { SettingsPage } from './features/operator/SettingsPage';
 import { ActivityLogPage } from './features/operator/ActivityLogPage';
+import { NotificationsPage } from './features/operator/NotificationsPage';
 
 // Root redirect component
 function RootRedirect() {
@@ -90,6 +91,7 @@ export const router = createBrowserRouter([
       { path: 'reports', element: <ReportsPage /> },
       { path: 'monthly-summary', element: <MonthlySummaryPage /> },
       { path: 'activity-log', element: <ActivityLogPage /> },
+      { path: 'notifications', element: <NotificationsPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
   },

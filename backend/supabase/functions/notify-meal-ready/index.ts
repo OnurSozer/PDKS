@@ -62,7 +62,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           user_ids: userIds,
-          title: "Yemek Hazir! / Meal is Ready!",
+          title: "🍽️ YEMEK HAZIR! 🍽️",
           body: `${chefName} yemegin hazir oldugunu bildirdi. / ${chefName} announced the meal is ready.`,
           data: { type: "meal_ready" },
         }),

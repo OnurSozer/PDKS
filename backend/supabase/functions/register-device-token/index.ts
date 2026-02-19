@@ -23,6 +23,13 @@ serve(async (req) => {
       throw new Error("platform must be 'android' or 'ios'");
     }
 
+    // Deactivate this token for any other user (device changed accounts)
+    await supabase
+      .from("device_tokens")
+      .update({ is_active: false })
+      .eq("token", token)
+      .neq("user_id", user.id);
+
     // Upsert the device token (if same user+token exists, just update)
     const { error } = await supabase
       .from("device_tokens")

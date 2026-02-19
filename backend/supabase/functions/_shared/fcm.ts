@@ -25,7 +25,12 @@ async function getGoogleAccessToken(): Promise<string> {
     throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY is not set");
   }
 
-  const keyJson = JSON.parse(atob(keyBase64));
+  // Remove literal newlines/carriage returns from decoded JSON.
+  // When the service account key is base64-encoded from pasted text,
+  // \n escape sequences in private_key can become literal newlines,
+  // which are invalid inside JSON string literals.
+  const decoded = atob(keyBase64).replace(/[\n\r\t]/g, "");
+  const keyJson = JSON.parse(decoded);
   const now = Math.floor(Date.now() / 1000);
 
   // Create JWT header and claims
@@ -113,6 +118,16 @@ async function sendSingleNotification(
             token: message.token,
             notification: message.notification,
             data: message.data || {},
+            android: {
+              priority: "high",
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: "default",
+                },
+              },
+            },
           },
         }),
       }
@@ -181,8 +196,13 @@ export async function sendBatchNotification(
   for (const result of results) {
     if (result.status === "fulfilled" && result.value.success) {
       sent++;
+      console.log(`FCM OK: token=${result.value.token.substring(0, 20)}...`);
     } else {
       failed++;
+      const errorDetail = result.status === "fulfilled"
+        ? result.value.error
+        : (result as PromiseRejectedResult).reason;
+      console.log(`FCM FAIL: token=${result.status === "fulfilled" ? result.value.token.substring(0, 20) : "unknown"}... error=${errorDetail}`);
       if (
         result.status === "fulfilled" &&
         result.value.error === "unregistered"

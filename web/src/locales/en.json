@@ -36,6 +36,7 @@
     "reports": "Reports",
     "monthlySummary": "Monthly Summary",
     "activityLog": "Activity Log",
+    "notifications": "Notifications",
     "settings": "Settings"
   },
   "common": {
@@ -359,6 +360,21 @@
     "fridayShort": "Fri",
     "saturdayShort": "Sat",
     "sundayShort": "Sun"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "send": "Send Notification",
+    "notificationTitle": "Title",
+    "body": "Message",
+    "selectEmployees": "Select Employees (empty = all)",
+    "allEmployees": "All Employees",
+    "sendButton": "Send",
+    "sentSuccess": "Notification sent successfully",
+    "history": "Notification History",
+    "recipients": "Recipients",
+    "sentBy": "Sent By",
+    "date": "Date",
+    "noHistory": "No notifications sent yet"
   },
   "language": {
     "tr": "Turkce",
