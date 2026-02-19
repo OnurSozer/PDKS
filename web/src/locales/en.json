@@ -173,7 +173,11 @@
     "editSchedule": "Edit Schedule",
     "scheduleUpdated": "Schedule updated successfully",
     "deleteSchedule": "Delete Schedule",
-    "noSchedules": "No schedules assigned yet"
+    "noSchedules": "No schedules assigned yet",
+    "editTemplate": "Edit Template",
+    "templateUpdated": "Template updated successfully",
+    "templateDeleted": "Template deleted successfully",
+    "deleteTemplateConfirm": "Are you sure you want to delete this template?"
   },
   "overtimeRules": {
     "title": "Overtime Rules",

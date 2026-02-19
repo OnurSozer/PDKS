@@ -85,6 +85,18 @@ serve(async (req) => {
     const errors = [];
 
     for (const empId of employee_ids) {
+      // End any currently active schedules for this employee
+      const dayBefore = new Date(newEffectiveFrom);
+      dayBefore.setDate(dayBefore.getDate() - 1);
+      const endDate = dayBefore.toISOString().split("T")[0];
+
+      await supabaseAdmin
+        .from("employee_schedules")
+        .update({ effective_to: endDate })
+        .eq("employee_id", empId)
+        .eq("company_id", user.company_id)
+        .is("effective_to", null);
+
       const { data, error } = await supabaseAdmin
         .from("employee_schedules")
         .insert({

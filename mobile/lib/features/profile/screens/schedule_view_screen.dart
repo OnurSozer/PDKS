@@ -80,9 +80,6 @@ class ScheduleViewScreen extends ConsumerWidget {
     final endTime = template?['end_time'] as String? ??
         schedule['custom_end_time'] as String? ??
         '-';
-    final breakMinutes = template?['break_duration_minutes'] as int? ??
-        schedule['custom_break_duration_minutes'] as int? ??
-        0;
     final workDays = (template?['work_days'] as List<dynamic>?) ??
         (schedule['custom_work_days'] as List<dynamic>?) ??
         [];
@@ -100,47 +97,6 @@ class ScheduleViewScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppConstants.paddingMD),
       children: [
-        // Shift info card
-        Container(
-          padding: const EdgeInsets.all(AppConstants.paddingMD),
-          decoration: BoxDecoration(
-            color: AppConstants.cardColor,
-            borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-            border: Border.all(color: AppConstants.borderColor, width: 0.5),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ScheduleRow(
-                icon: Icons.badge_outlined,
-                label: l10n.shiftName,
-                value: shiftName,
-              ),
-              Divider(height: 24, color: AppConstants.borderColor),
-              _ScheduleRow(
-                icon: Icons.login,
-                iconColor: AppConstants.clockInColor,
-                label: l10n.shiftStart,
-                value: _formatTime(startTime),
-              ),
-              const SizedBox(height: 8),
-              _ScheduleRow(
-                icon: Icons.logout,
-                iconColor: AppConstants.clockOutColor,
-                label: l10n.shiftEnd,
-                value: _formatTime(endTime),
-              ),
-              const SizedBox(height: 8),
-              _ScheduleRow(
-                icon: Icons.coffee_outlined,
-                label: l10n.breakDuration,
-                value: '${breakMinutes}m',
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppConstants.paddingMD),
-
         // Work days card
         Container(
           padding: const EdgeInsets.all(AppConstants.paddingMD),
@@ -193,6 +149,61 @@ class ScheduleViewScreen extends ConsumerWidget {
                     ),
                   );
                 }),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppConstants.paddingMD),
+
+        // Shift info card
+        Container(
+          padding: const EdgeInsets.all(AppConstants.paddingMD),
+          decoration: BoxDecoration(
+            color: AppConstants.cardColor,
+            borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+            border: Border.all(color: AppConstants.borderColor, width: 0.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.badge_outlined, color: AppConstants.primaryColor, size: 22),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.shiftName,
+                    style: const TextStyle(
+                      color: AppConstants.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.only(left: 34),
+                child: Text(
+                  shiftName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.textPrimary,
+                  ),
+                ),
+              ),
+              Divider(height: 24, color: AppConstants.borderColor),
+              _ScheduleRow(
+                icon: Icons.login,
+                iconColor: AppConstants.clockInColor,
+                label: l10n.shiftStart,
+                value: _formatTime(startTime),
+              ),
+              const SizedBox(height: 8),
+              _ScheduleRow(
+                icon: Icons.logout,
+                iconColor: AppConstants.clockOutColor,
+                label: l10n.shiftEnd,
+                value: _formatTime(endTime),
               ),
             ],
           ),

@@ -48,8 +48,8 @@ export function DataTable<T>({ data, columns, searchPlaceholder, pageSize = 10 }
           className="w-full max-w-sm px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-sm"
         />
       )}
-      <div className="overflow-x-auto border border-zinc-800 rounded-xl">
-        <table className="min-w-full divide-y divide-zinc-800">
+      <div className="overflow-x-auto border border-zinc-800 rounded-xl max-w-full">
+        <table className="w-full divide-y divide-zinc-800">
           <thead className="bg-zinc-800/50">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>

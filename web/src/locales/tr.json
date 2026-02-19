@@ -173,7 +173,11 @@
     "editSchedule": "Vardiya Düzenle",
     "scheduleUpdated": "Vardiya başarıyla güncellendi",
     "deleteSchedule": "Vardiya Sil",
-    "noSchedules": "Henüz vardiya atanmadı"
+    "noSchedules": "Henüz vardiya atanmadı",
+    "editTemplate": "Şablon Düzenle",
+    "templateUpdated": "Şablon başarıyla güncellendi",
+    "templateDeleted": "Şablon başarıyla silindi",
+    "deleteTemplateConfirm": "Bu şablonu silmek istediğinizden emin misiniz?"
   },
   "overtimeRules": {
     "title": "Fazla Mesai Kuralları",

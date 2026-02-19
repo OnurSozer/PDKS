@@ -10,7 +10,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useEmployees } from '../../hooks/useEmployees';
 import { ShiftTemplate, EmployeeSchedule } from '../../types';
 import { DataTable } from '../../components/shared/DataTable';
-import { Plus, X, Calendar, Pencil } from 'lucide-react';
+import { Plus, X, Calendar, Pencil, Trash2 } from 'lucide-react';
 
 const DAY_OPTIONS = [
   { value: 1, labelKey: 'days.monday' },
@@ -43,6 +43,9 @@ export function SchedulesPage() {
   const [assignTemplateId, setAssignTemplateId] = useState('');
   const [assignEmployeeId, setAssignEmployeeId] = useState('');
   const [assignEffectiveFrom, setAssignEffectiveFrom] = useState(new Date().toISOString().split('T')[0]);
+
+  // Edit template state
+  const [editingTemplate, setEditingTemplate] = useState<ShiftTemplate | null>(null);
 
   // Edit schedule state
   const [editingSchedule, setEditingSchedule] = useState<EmployeeSchedule | null>(null);
@@ -110,6 +113,74 @@ export function SchedulesPage() {
       queryClient.invalidateQueries({ queryKey: ['shift-templates'] });
       setShowCreateForm(false);
       reset();
+    },
+  });
+
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    reset: resetEdit,
+    watch: watchEdit,
+    setValue: setValueEdit,
+    formState: { errors: editErrors },
+  } = useForm<TemplateFormData>({
+    resolver: zodResolver(templateSchema),
+  });
+
+  const editWorkDays = watchEdit('work_days');
+
+  const toggleEditDay = (day: number) => {
+    const current = editWorkDays || [];
+    const newDays = current.includes(day)
+      ? current.filter((d) => d !== day)
+      : [...current, day].sort();
+    setValueEdit('work_days', newDays);
+  };
+
+  const openEditTemplate = (template: ShiftTemplate) => {
+    setEditingTemplate(template);
+    resetEdit({
+      name: template.name,
+      start_time: template.start_time?.substring(0, 5) || '',
+      end_time: template.end_time?.substring(0, 5) || '',
+      break_duration_minutes: template.break_duration_minutes || 0,
+      work_days: template.work_days || [1, 2, 3, 4, 5],
+    });
+  };
+
+  const updateTemplateMutation = useMutation({
+    mutationFn: async (data: TemplateFormData) => {
+      if (!editingTemplate) return;
+      const { error } = await supabase
+        .from('shift_templates')
+        .update({
+          name: data.name,
+          start_time: data.start_time,
+          end_time: data.end_time,
+          break_duration_minutes: data.break_duration_minutes,
+          work_days: data.work_days,
+        })
+        .eq('id', editingTemplate.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shift-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['employee-schedules'] });
+      setEditingTemplate(null);
+    },
+  });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('shift_templates')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shift-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['employee-schedules'] });
     },
   });
 
@@ -206,16 +277,36 @@ export function SchedulesPage() {
       id: 'actions',
       header: t('common.actions'),
       cell: ({ row }) => (
-        <button
-          onClick={() => {
-            setAssignTemplateId(row.original.id);
-            setShowAssignForm(true);
-          }}
-          className="inline-flex items-center gap-1 text-sm text-amber-500 hover:text-amber-400 transition-colors"
-        >
-          <Calendar className="w-4 h-4" />
-          {t('schedules.assignSchedule')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setAssignTemplateId(row.original.id);
+              setShowAssignForm(true);
+            }}
+            title={t('schedules.assignSchedule')}
+            className="p-1.5 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
+          >
+            <Calendar className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => openEditTemplate(row.original)}
+            title={t('common.edit')}
+            className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm(t('schedules.deleteTemplateConfirm'))) {
+                deleteTemplateMutation.mutate(row.original.id);
+              }
+            }}
+            title={t('common.delete')}
+            className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       ),
       enableSorting: false,
     },
@@ -343,6 +434,70 @@ export function SchedulesPage() {
                 </button>
                 <button type="submit" disabled={createMutation.isPending} className="px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all">
                   {createMutation.isPending ? t('common.loading') : t('common.create')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit template modal */}
+      {editingTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditingTemplate(null)} />
+          <div className="relative bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">{t('schedules.editTemplate')}</h2>
+              <button onClick={() => setEditingTemplate(null)} className="text-zinc-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitEdit((data) => updateTemplateMutation.mutate(data))} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300">{t('schedules.templateName')} *</label>
+                <input {...registerEdit('name')} className={inputClasses} />
+                {editErrors.name && <p className="mt-1 text-sm text-rose-400">{t('common.required')}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300">{t('schedules.startTime')} *</label>
+                  <input type="time" {...registerEdit('start_time')} className={inputClasses} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300">{t('schedules.endTime')} *</label>
+                  <input type="time" {...registerEdit('end_time')} className={inputClasses} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300">{t('schedules.breakDuration')}</label>
+                <input type="number" {...registerEdit('break_duration_minutes')} className={inputClasses} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">{t('schedules.workDays')} *</label>
+                <div className="flex flex-wrap gap-2">
+                  {DAY_OPTIONS.map((day) => (
+                    <button
+                      key={day.value}
+                      type="button"
+                      onClick={() => toggleEditDay(day.value)}
+                      className={`px-3 py-1 text-sm rounded-lg border ${
+                        editWorkDays?.includes(day.value)
+                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                          : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+                      }`}
+                    >
+                      {t(day.labelKey)}
+                    </button>
+                  ))}
+                </div>
+                {editErrors.work_days && <p className="mt-1 text-sm text-rose-400">{t('common.required')}</p>}
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setEditingTemplate(null)} className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors">
+                  {t('common.cancel')}
+                </button>
+                <button type="submit" disabled={updateTemplateMutation.isPending} className="px-4 py-2 text-sm font-semibold text-black bg-amber-500 rounded-lg hover:bg-amber-400 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all">
+                  {updateTemplateMutation.isPending ? t('common.loading') : t('common.save')}
                 </button>
               </div>
             </form>

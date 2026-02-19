@@ -60,13 +60,13 @@ export function ReportsPage() {
   }, {});
 
   const chartData = Object.entries(dateGroups)
+    .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, data]) => ({
       date: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
       workHours: Math.round((data.work / 60) * 10) / 10,
       overtimeHours: Math.round((data.overtime / 60) * 10) / 10,
       lateCount: data.late,
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+    }));
 
   const exportData = summaries.map((s) => ({
     employee: s.employee ? `${(s.employee as any).first_name} ${(s.employee as any).last_name}` : s.employee_id,
