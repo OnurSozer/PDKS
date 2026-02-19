@@ -26,14 +26,16 @@ Future<void> main() async {
     // App can work without push notifications
   }
 
-  // Load saved locale
+  // Load saved preferences
   final prefs = await SharedPreferences.getInstance();
   final savedLocale = prefs.getString('locale') ?? 'tr';
+  final savedFirstDay = prefs.getInt('first_day_of_week') ?? 1; // 1=Monday
 
   runApp(
     ProviderScope(
       overrides: [
         localeProvider.overrideWith((ref) => Locale(savedLocale)),
+        firstDayOfWeekProvider.overrideWith((ref) => savedFirstDay),
       ],
       child: const PdksApp(),
     ),

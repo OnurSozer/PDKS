@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useAuth } from '../../hooks/useAuth';
 import { useEmployees, useDeleteEmployee } from '../../hooks/useEmployees';
+import { supabase } from '../../lib/supabase';
 import { Profile } from '../../types';
 import { DataTable } from '../../components/shared/DataTable';
 import { Plus, Eye, Trash2 } from 'lucide-react';
+
+type EmployeeWithLeave = Profile & { _remainingLeave?: number };
 
 export function EmployeesPage() {
   const { t } = useTranslation();
@@ -16,6 +20,39 @@ export function EmployeesPage() {
   const deleteEmployee = useDeleteEmployee();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const currentYear = new Date().getFullYear();
+  const employeeIds = employees.map((e) => e.id);
+
+  // Fetch leave balances for all employees
+  const { data: leaveBalances = [] } = useQuery({
+    queryKey: ['leave-balances', companyId, currentYear, employeeIds.join(',')],
+    queryFn: async () => {
+      if (employeeIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('leave_balances')
+        .select('employee_id, total_days, used_days, leave_type:leave_types!inner(is_deductible)')
+        .in('employee_id', employeeIds)
+        .eq('year', currentYear)
+        .eq('leave_types.is_deductible', true);
+      if (error) throw error;
+      return data as Array<{ employee_id: string; total_days: number; used_days: number }>;
+    },
+    enabled: employeeIds.length > 0,
+  });
+
+  // Build a map: employee_id -> total remaining leave
+  const remainingMap: Record<string, number> = {};
+  for (const b of leaveBalances) {
+    const remaining = (b.total_days ?? 0) - (b.used_days ?? 0);
+    remainingMap[b.employee_id] = (remainingMap[b.employee_id] ?? 0) + remaining;
+  }
+
+  // Merge remaining leave into employee data
+  const employeesWithLeave: EmployeeWithLeave[] = employees.map((emp) => ({
+    ...emp,
+    _remainingLeave: remainingMap[emp.id] ?? 0,
+  }));
+
   const handleDelete = (emp: Profile) => {
     if (!window.confirm(`${emp.first_name} ${emp.last_name} - ${t('common.confirm')}?`)) return;
     setDeletingId(emp.id);
@@ -24,7 +61,7 @@ export function EmployeesPage() {
     });
   };
 
-  const columns: ColumnDef<Profile, any>[] = [
+  const columns: ColumnDef<EmployeeWithLeave, any>[] = [
     {
       accessorFn: (row) => `${row.first_name} ${row.last_name}`,
       id: 'name',
@@ -63,6 +100,26 @@ export function EmployeesPage() {
       cell: ({ getValue }) => {
         const val = getValue() as string;
         return val ? new Date(val).toLocaleDateString() : '-';
+      },
+    },
+    {
+      accessorKey: '_remainingLeave',
+      header: t('employees.remainingLeave'),
+      cell: ({ getValue }) => {
+        const val = getValue() as number;
+        return (
+          <span
+            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+              val > 5
+                ? 'bg-emerald-500/10 text-emerald-400'
+                : val > 0
+                ? 'bg-amber-500/10 text-amber-400'
+                : 'bg-rose-500/10 text-rose-400'
+            }`}
+          >
+            {val} {t('employees.days')}
+          </span>
+        );
       },
     },
     {
@@ -129,7 +186,7 @@ export function EmployeesPage() {
         </Link>
       </div>
       <DataTable
-        data={employees}
+        data={employeesWithLeave}
         columns={columns}
         searchPlaceholder={`${t('common.search')}...`}
       />

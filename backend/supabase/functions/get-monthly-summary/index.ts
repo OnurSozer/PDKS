@@ -141,11 +141,11 @@ serve(async (req) => {
     }
 
     // Fetch leave records for all employees in this month with leave type name
-    const leaveTypeMap = new Map<string, string>();
+    const leaveTypeMap = new Map<string, { name: string; isDeductible: boolean }>();
     try {
       const { data: allLeaveRecords, error: leaveErr } = await supabaseAdmin
         .from("leave_records")
-        .select("employee_id, start_date, end_date, leave_type_id, leave_types(name)")
+        .select("employee_id, start_date, end_date, leave_type_id, leave_types(name, is_deductible)")
         .in("employee_id", employeeIds)
         .eq("status", "active")
         .lte("start_date", lastDay)
@@ -153,14 +153,16 @@ serve(async (req) => {
 
       if (!leaveErr && allLeaveRecords) {
         for (const lr of allLeaveRecords) {
-          const typeName = (lr.leave_types as any)?.name || "";
+          const lt = lr.leave_types as any;
+          const typeName = lt?.name || "";
+          const isDeductible = lt?.is_deductible !== false;
           const lrStart = new Date(`${lr.start_date}T00:00:00`);
           const lrEnd = new Date(`${lr.end_date}T00:00:00`);
           const cursor = new Date(lrStart);
           while (cursor <= lrEnd) {
             const cursorStr = cursor.toISOString().split("T")[0];
             if (cursorStr >= firstDay && cursorStr <= lastDay) {
-              leaveTypeMap.set(`${lr.employee_id}|${cursorStr}`, typeName);
+              leaveTypeMap.set(`${lr.employee_id}|${cursorStr}`, { name: typeName, isDeductible });
             }
             cursor.setDate(cursor.getDate() + 1);
           }
@@ -217,6 +219,8 @@ serve(async (req) => {
       let lateDays = 0;
       let absentDays = 0;
       let leaveDays = 0;
+      let annualLeaveDays = 0;
+      let sickLeaveDays = 0;
       let totalDeficit = 0;
       const dailyDetails = [];
       let weekendWorkMinutes = 0;
@@ -343,7 +347,20 @@ serve(async (req) => {
           }
 
           if (dayIsLate) lateDays++;
-          if (dayIsLeave) leaveDays++;
+          if (dayIsLeave) {
+            leaveDays++;
+            const leaveInfo = leaveTypeMap.get(`${employee.id}|${dateStr}`);
+            if (leaveInfo) {
+              if (leaveInfo.isDeductible) {
+                annualLeaveDays++;
+              } else {
+                sickLeaveDays++;
+              }
+            } else {
+              // Fallback: count as annual if no info
+              annualLeaveDays++;
+            }
+          }
         } else if (isWorkDay && dateStr < today) {
           // No summary and date is before today = absent (never clocked in)
           dayIsAbsent = true;
@@ -379,7 +396,7 @@ serve(async (req) => {
           is_late: dayIsLate,
           is_absent: dayIsAbsent,
           is_leave: dayIsLeave,
-          leave_type_name: dayIsLeave ? (leaveTypeMap.get(`${employee.id}|${dateStr}`) || null) : null,
+          leave_type_name: dayIsLeave ? (leaveTypeMap.get(`${employee.id}|${dateStr}`)?.name || null) : null,
           deficit_minutes: dayDeficit,
           status: dayStatus,
           special_day_type_id: daySpecialDayTypeId,
@@ -437,6 +454,8 @@ serve(async (req) => {
         late_days: lateDays,
         absent_days: absentDays,
         leave_days: leaveDays,
+        annual_leave_days: annualLeaveDays,
+        sick_leave_days: sickLeaveDays,
         daily_details: dailyDetails,
       });
     }

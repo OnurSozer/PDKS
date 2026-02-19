@@ -9,6 +9,7 @@ class CalendarGrid extends StatelessWidget {
   final DateTime? selectedDate;
   final Map<String, String> dayStatuses; // "yyyy-MM-dd" -> "full"|"overtime"|"missing"|"leave"
   final ValueChanged<DateTime> onDayTap;
+  final int firstDayOfWeek; // 1 = Monday, 7 = Sunday
 
   const CalendarGrid({
     super.key,
@@ -17,18 +18,23 @@ class CalendarGrid extends StatelessWidget {
     this.selectedDate,
     required this.dayStatuses,
     required this.onDayTap,
+    this.firstDayOfWeek = 1,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final dayNames = l10n.shortDayNames;
-    final firstWeekday = AppDateUtils.firstWeekdayOfMonth(year, month);
+    final allDayNames = l10n.shortDayNames; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+
+    // Reorder day names based on first day of week
+    final dayNames = _reorderDayNames(allDayNames);
+
+    final firstWeekday = DateTime(year, month, 1).weekday; // 1=Mon, 7=Sun
     final daysInMonth = DateTime(year, month + 1, 0).day;
     final now = DateTime.now();
 
-    // Calculate total cells needed (padding + days)
-    final leadingEmpty = firstWeekday - 1; // Monday=1 => 0 leading cells
+    // Calculate leading empty cells based on first day of week
+    final leadingEmpty = _leadingEmptyCells(firstWeekday);
     final totalCells = leadingEmpty + daysInMonth;
     final rows = (totalCells / 7).ceil();
 
@@ -45,7 +51,7 @@ class CalendarGrid extends StatelessWidget {
                   child: Text(
                     name,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: AppConstants.textMuted,
                     ),
@@ -74,7 +80,7 @@ class CalendarGrid extends StatelessWidget {
                   final isSelected = selectedDate != null &&
                       AppDateUtils.isSameDay(date, selectedDate!);
                   final isFuture = date.isAfter(now);
-                  final isWeekend = col >= 5;
+                  final isWeekend = _isWeekendColumn(col);
 
                   // Determine cell styling
                   Color bgColor = AppConstants.cardColor;
@@ -89,6 +95,8 @@ class CalendarGrid extends StatelessWidget {
                     borderColor = _statusColor(status);
                     borderWidth = 2;
                   }
+
+                  final emoji = _statusEmoji(status);
 
                   return Expanded(
                     child: Padding(
@@ -106,9 +114,11 @@ class CalendarGrid extends StatelessWidget {
                                 width: borderWidth,
                               ),
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
                               children: [
+                                // Number — always centered
                                 Text(
                                   '$dayNum',
                                   style: TextStyle(
@@ -125,17 +135,31 @@ class CalendarGrid extends StatelessWidget {
                                                 : AppConstants.textPrimary,
                                   ),
                                 ),
-                                if (status != null && !isToday) ...[
-                                  const SizedBox(height: 2),
-                                  Container(
-                                    width: 5,
-                                    height: 5,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: _statusColor(status),
+                                // Dot + emoji offset below the centered number
+                                if (status != null && !isToday)
+                                  Transform.translate(
+                                    offset: const Offset(0, 18),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 5,
+                                          height: 5,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: _statusColor(status),
+                                          ),
+                                        ),
+                                        if (emoji != null) ...[
+                                          const SizedBox(height: 5),
+                                          Text(
+                                            emoji,
+                                            style: const TextStyle(fontSize: 8, height: 1),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
-                                ],
                               ],
                             ),
                           ),
@@ -150,6 +174,37 @@ class CalendarGrid extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Reorder day names based on first day of week
+  List<String> _reorderDayNames(List<String> names) {
+    // names is [Mon, Tue, Wed, Thu, Fri, Sat, Sun] (indices 0-6)
+    if (firstDayOfWeek == 7) {
+      // Sunday first: [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+      return [names[6], ...names.sublist(0, 6)];
+    }
+    return names; // Monday first (default)
+  }
+
+  /// Calculate leading empty cells for the first row
+  int _leadingEmptyCells(int firstWeekday) {
+    // firstWeekday: 1=Mon, 7=Sun
+    if (firstDayOfWeek == 7) {
+      // Sunday-first: Sun=0 leading, Mon=1, ..., Sat=6
+      return firstWeekday % 7;
+    }
+    // Monday-first: Mon=0 leading, Tue=1, ..., Sun=6
+    return firstWeekday - 1;
+  }
+
+  /// Check if column index represents a weekend
+  bool _isWeekendColumn(int col) {
+    if (firstDayOfWeek == 7) {
+      // Sunday-first: col 0 = Sun (weekend), col 6 = Sat (weekend)
+      return col == 0 || col == 6;
+    }
+    // Monday-first: col 5 = Sat, col 6 = Sun
+    return col >= 5;
   }
 
   Color _statusColor(String status) {
@@ -170,6 +225,20 @@ class CalendarGrid extends StatelessWidget {
         return AppConstants.holidayColor;
       default:
         return AppConstants.textMuted;
+    }
+  }
+
+  String? _statusEmoji(String? status) {
+    switch (status) {
+      case 'leave':
+        return '\u{1F334}'; // 🌴
+      case 'sick_leave':
+        return '\u{1F3E5}'; // 🏥
+      case 'holiday':
+      case 'half_holiday':
+        return '\u{1F389}'; // 🎉
+      default:
+        return null;
     }
   }
 }

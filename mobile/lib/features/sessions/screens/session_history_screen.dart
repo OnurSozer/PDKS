@@ -6,6 +6,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../leave/providers/leave_provider.dart';
+import '../../../router.dart';
 import '../providers/session_history_provider.dart';
 import '../widgets/month_pill_bar.dart';
 import '../widgets/calendar_grid.dart';
@@ -98,26 +99,24 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
             // Calendar grid
             Expanded(
               child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    CalendarGrid(
-                      year: state.selectedYear,
-                      month: state.selectedMonth,
-                      selectedDate: state.selectedDate,
-                      dayStatuses: state.monthDayStatuses,
-                      onDayTap: (date) {
-                        ref.read(sessionHistoryProvider.notifier).loadSessionsForDate(date);
-                        _showDayBottomSheet(date);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Legend
-                    const CalendarLegend(),
-                    const SizedBox(height: 24),
-                  ],
+                child: CalendarGrid(
+                  year: state.selectedYear,
+                  month: state.selectedMonth,
+                  selectedDate: state.selectedDate,
+                  dayStatuses: state.monthDayStatuses,
+                  firstDayOfWeek: ref.watch(firstDayOfWeekProvider),
+                  onDayTap: (date) {
+                    ref.read(sessionHistoryProvider.notifier).loadSessionsForDate(date);
+                    _showDayBottomSheet(date);
+                  },
                 ),
               ),
+            ),
+
+            // Legend — pinned to bottom
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: CalendarLegend(),
             ),
           ],
         ),

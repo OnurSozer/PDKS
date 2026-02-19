@@ -129,7 +129,8 @@
     "initialBalance": "Başlangıç Bakiyesi",
     "leaveEntitlements": "İzin Hakları",
     "daysPerYear": "gün/yıl",
-    "days": "gün"
+    "days": "gün",
+    "remainingLeave": "Kalan İzin"
   },
   "sessions": {
     "title": "Oturumlar",

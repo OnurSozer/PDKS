@@ -196,6 +196,11 @@ class AppLocalizations {
   String get lateDays => get('late_days');
   String get absentDays => get('absent_days');
   String get none => get('none');
+  String get annualLeaveUsage => get('annual_leave_usage');
+  String get sickLeaveUsage => get('sick_leave_usage');
+  String get hoursFull => get('hours_full');
+  String get minutesFull => get('minutes_full');
+  String get daysFull => get('days_full');
 
   // ---- Calendar (new) ----
   String get fullShift => get('full_shift');
@@ -241,6 +246,11 @@ class AppLocalizations {
   String get onLeaveToday => get('on_leave_today');
   String get onSickLeaveToday => get('on_sick_leave_today');
   String get cancelLeaveDay => get('cancel_leave_day');
+
+  // ---- Settings ----
+  String get firstDayOfWeek => get('first_day_of_week');
+  String get sundayOption => get('sunday_option');
+  String get mondayOption => get('monday_option');
 
   // ---- Profile (new) ----
   String get remainingLeaveShort => get('remaining_leave_short');
@@ -440,6 +450,11 @@ class AppLocalizations {
     'late_days': 'Late Days',
     'absent_days': 'Absent Days',
     'none': 'None',
+    'annual_leave_usage': 'Annual Leave',
+    'sick_leave_usage': 'Sick Leave',
+    'hours_full': 'Hours',
+    'minutes_full': 'Minutes',
+    'days_full': 'Days',
 
     // Calendar (new)
     'full_shift': 'Full Shift',
@@ -506,13 +521,18 @@ class AppLocalizations {
     'month_dec': 'Dec',
 
     // Day abbreviations
-    'day_mon': 'Mo',
-    'day_tue': 'Tu',
-    'day_wed': 'We',
-    'day_thu': 'Th',
-    'day_fri': 'Fr',
-    'day_sat': 'Sa',
-    'day_sun': 'Su',
+    'day_mon': 'Mon',
+    'day_tue': 'Tue',
+    'day_wed': 'Wed',
+    'day_thu': 'Thu',
+    'day_fri': 'Fri',
+    'day_sat': 'Sat',
+    'day_sun': 'Sun',
+
+    // Settings
+    'first_day_of_week': 'First Day of Week',
+    'sunday_option': 'Sunday',
+    'monday_option': 'Monday',
   };
 
   // ---- Turkish translations ----
@@ -675,6 +695,11 @@ class AppLocalizations {
     'late_days': 'Geç Kalma',
     'absent_days': 'Devamsızlık',
     'none': 'Yok',
+    'annual_leave_usage': 'Yıllık İzin',
+    'sick_leave_usage': 'Hastalık İzni',
+    'hours_full': 'Saat',
+    'minutes_full': 'Dakika',
+    'days_full': 'Gün',
 
     // Calendar (new)
     'full_shift': 'Tam Mesai',
@@ -741,13 +766,18 @@ class AppLocalizations {
     'month_dec': 'Ara',
 
     // Day abbreviations
-    'day_mon': 'Pt',
-    'day_tue': 'Sa',
-    'day_wed': 'Ça',
-    'day_thu': 'Pe',
-    'day_fri': 'Cu',
-    'day_sat': 'Ct',
-    'day_sun': 'Pa',
+    'day_mon': 'Pzt',
+    'day_tue': 'Sal',
+    'day_wed': 'Çar',
+    'day_thu': 'Per',
+    'day_fri': 'Cum',
+    'day_sat': 'Cmt',
+    'day_sun': 'Paz',
+
+    // Settings
+    'first_day_of_week': 'Haftanın İlk Günü',
+    'sunday_option': 'Pazar',
+    'monday_option': 'Pazartesi',
   };
 }
 

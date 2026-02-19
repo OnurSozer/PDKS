@@ -19,9 +19,9 @@ class AppConstants {
   static const Color clockOutColor = Color(0xFFEF4444);   // red-500
   static const Color mealReadyColor = Color(0xFFF59E0B);  // amber-500
   static const Color overtimeColor = Color(0xFF8B5CF6);   // violet-500
-  static const Color holidayColor = Color(0xFFF59E0B);     // amber-500
-  static const Color leaveColor = Color(0xFF0EA5E9);      // sky-500
-  static const Color sickLeaveColor = Color(0xFFEF4444);  // red-500
+  static const Color holidayColor = Color(0xFFEC4899);     // pink-500
+  static const Color leaveColor = Color(0xFFF59E0B);      // amber-500 (yellow)
+  static const Color sickLeaveColor = Color(0xFFF59E0B);  // amber-500 (yellow)
   static const Color errorColor = Color(0xFFEF4444);      // red-500
   static const Color warningColor = Color(0xFFF59E0B);    // amber-500
   static const Color onTimeColor = Color(0xFF10B981);     // green
@@ -29,7 +29,7 @@ class AppConstants {
 
   // Shift status colors
   static const Color fullShiftColor = Color(0xFF10B981);   // green
-  static const Color overtimeShiftColor = Color(0xFFE91E8C); // pink
+  static const Color overtimeShiftColor = Color(0xFF059669); // emerald-600 (green)
   static const Color missingShiftColor = Color(0xFFEF4444);  // red
 
   // Surface Colors (Dark Navy Theme)
@@ -61,4 +61,5 @@ class AppConstants {
   // Shared Preferences Keys
   static const String prefLocale = 'locale';
   static const String prefThemeMode = 'theme_mode';
+  static const String prefFirstDayOfWeek = 'first_day_of_week';
 }

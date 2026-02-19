@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../providers/leave_provider.dart';
@@ -14,14 +13,6 @@ class LeaveScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/profile/leave/new'),
-        icon: const Icon(Icons.add),
-        label: Text(l10n.recordLeave),
-        backgroundColor: AppConstants.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 2,
-      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => ref.read(leaveProvider.notifier).loadAll(),
@@ -96,7 +87,7 @@ class LeaveScreen extends ConsumerWidget {
                     onCancel: () => _confirmCancel(context, ref, record, l10n),
                   ),
                 ),
-              const SizedBox(height: 80), // Space for FAB
+              const SizedBox(height: 24),
             ],
           ),
         ),

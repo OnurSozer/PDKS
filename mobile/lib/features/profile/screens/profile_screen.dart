@@ -9,7 +9,7 @@ import '../../../core/utils/date_utils.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../records/providers/records_provider.dart';
 import '../../leave/providers/leave_provider.dart';
-import '../../../router.dart';
+import '../../../router.dart';  // localeProvider + firstDayOfWeekProvider
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -19,47 +19,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool _isEditing = false;
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _firstNameController;
-  late TextEditingController _lastNameController;
-  late TextEditingController _phoneController;
-
-  @override
-  void initState() {
-    super.initState();
-    final profile = ref.read(authProvider).profile;
-    _firstNameController = TextEditingController(text: profile?.firstName ?? '');
-    _lastNameController = TextEditingController(text: profile?.lastName ?? '');
-    _phoneController = TextEditingController(text: profile?.phone ?? '');
-  }
-
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _phoneController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    await ref.read(authProvider.notifier).updateProfile(
-          firstName: _firstNameController.text.trim(),
-          lastName: _lastNameController.text.trim(),
-          phone: _phoneController.text.trim(),
-        );
-
-    if (mounted) {
-      final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.profileUpdated)),
-      );
-      setState(() => _isEditing = false);
-    }
-  }
-
   void _showChangePasswordDialog() {
     final l10n = AppLocalizations.of(context);
     final newPasswordController = TextEditingController();
@@ -121,6 +80,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  Future<void> _toggleFirstDayOfWeek() async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getInt(AppConstants.prefFirstDayOfWeek) ?? 1;
+    final newValue = current == 1 ? 7 : 1; // Toggle between Monday(1) and Sunday(7)
+    await prefs.setInt(AppConstants.prefFirstDayOfWeek, newValue);
+    ref.read(firstDayOfWeekProvider.notifier).state = newValue;
+  }
+
   Future<void> _toggleLanguage() async {
     final prefs = await SharedPreferences.getInstance();
     final currentLocale = prefs.getString(AppConstants.prefLocale) ?? 'tr';
@@ -165,9 +132,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final l10n = AppLocalizations.of(context);
     final profile = authState.profile;
 
-    // Calculate remaining leave
+    // Calculate remaining leave (only deductible types, exclude sick leave)
     double remainingLeave = 0;
     for (final balance in leaveState.balances) {
+      final leaveType = balance['leave_type'] as Map<String, dynamic>?;
+      final isDeductible = leaveType?['is_deductible'] as bool? ?? true;
+      if (!isDeductible) continue;
       final total = (balance['total_days'] as num?)?.toDouble() ?? 0;
       final used = (balance['used_days'] as num?)?.toDouble() ?? 0;
       remainingLeave += (total - used);
@@ -178,26 +148,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: ListView(
           padding: const EdgeInsets.all(AppConstants.paddingMD),
           children: [
-            // Header row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.profile,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: AppConstants.textPrimary,
-                  ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                l10n.profile,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: AppConstants.textPrimary,
                 ),
-                IconButton(
-                  icon: Icon(
-                    _isEditing ? Icons.close : Icons.settings_outlined,
-                    color: AppConstants.textSecondary,
-                  ),
-                  onPressed: () => setState(() => _isEditing = !_isEditing),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -228,23 +189,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                   ),
-                  if (!_isEditing)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: AppConstants.primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -320,10 +264,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             const SizedBox(height: 20),
 
-            if (_isEditing)
-              _buildEditForm(l10n, authState.isLoading)
-            else
-              _buildViewProfile(l10n, profile),
+            _buildViewProfile(l10n, profile),
 
             const SizedBox(height: 16),
 
@@ -362,6 +303,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         : l10n.english,
                     onTap: _toggleLanguage,
                   ),
+                  Divider(height: 1, color: AppConstants.borderColor, indent: 56),
+                  _ActionTile(
+                    icon: Icons.calendar_view_week,
+                    label: l10n.firstDayOfWeek,
+                    subtitle: ref.watch(firstDayOfWeekProvider) == 7
+                        ? l10n.sundayOption
+                        : l10n.mondayOption,
+                    onTap: _toggleFirstDayOfWeek,
+                  ),
                 ],
               ),
             ),
@@ -385,60 +335,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEditForm(AppLocalizations l10n, bool isLoading) {
-    return Container(
-      padding: const EdgeInsets.all(AppConstants.paddingMD),
-      decoration: BoxDecoration(
-        color: AppConstants.cardColor,
-        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-        border: Border.all(color: AppConstants.borderColor, width: 0.5),
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            TextFormField(
-              controller: _firstNameController,
-              decoration: InputDecoration(labelText: l10n.firstName),
-              validator: (v) => Validators.required(v, l10n.firstName),
-            ),
-            const SizedBox(height: AppConstants.paddingMD),
-            TextFormField(
-              controller: _lastNameController,
-              decoration: InputDecoration(labelText: l10n.lastName),
-              validator: (v) => Validators.required(v, l10n.lastName),
-            ),
-            const SizedBox(height: AppConstants.paddingMD),
-            TextFormField(
-              controller: _phoneController,
-              decoration: InputDecoration(labelText: l10n.phone),
-              keyboardType: TextInputType.phone,
-              validator: Validators.phone,
-            ),
-            const SizedBox(height: AppConstants.paddingMD),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: isLoading ? null : _saveProfile,
-                child: isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(l10n.save),
-              ),
-            ),
           ],
         ),
       ),

@@ -68,25 +68,35 @@ serve(async (req) => {
       details: { start_date: leaveRecord.start_date, end_date: leaveRecord.end_date, total_days: leaveRecord.total_days },
     });
 
-    // 2. Reverse the balance update
-    const currentYear = new Date(leaveRecord.start_date).getFullYear();
-    const { data: balance } = await supabaseAdmin
-      .from("leave_balances")
-      .select("*")
-      .eq("employee_id", leaveRecord.employee_id)
-      .eq("leave_type_id", leaveRecord.leave_type_id)
-      .eq("year", currentYear)
+    // 2. Reverse the balance update (only for deductible leave types)
+    const { data: leaveType } = await supabaseAdmin
+      .from("leave_types")
+      .select("is_deductible")
+      .eq("id", leaveRecord.leave_type_id)
       .single();
 
-    if (balance) {
-      const newUsedDays = Math.max(
-        0,
-        parseFloat(balance.used_days) - parseFloat(leaveRecord.total_days)
-      );
-      await supabaseAdmin
+    const isDeductible = leaveType?.is_deductible !== false;
+
+    if (isDeductible) {
+      const currentYear = new Date(leaveRecord.start_date).getFullYear();
+      const { data: balance } = await supabaseAdmin
         .from("leave_balances")
-        .update({ used_days: newUsedDays })
-        .eq("id", balance.id);
+        .select("*")
+        .eq("employee_id", leaveRecord.employee_id)
+        .eq("leave_type_id", leaveRecord.leave_type_id)
+        .eq("year", currentYear)
+        .single();
+
+      if (balance) {
+        const newUsedDays = Math.max(
+          0,
+          parseFloat(balance.used_days) - parseFloat(leaveRecord.total_days)
+        );
+        await supabaseAdmin
+          .from("leave_balances")
+          .update({ used_days: newUsedDays })
+          .eq("id", balance.id);
+      }
     }
 
     // 3. Recalculate daily summaries for each affected date

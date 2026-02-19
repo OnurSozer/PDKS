@@ -17,6 +17,9 @@ import 'features/profile/screens/schedule_view_screen.dart';
 // Locale provider for language switching
 final localeProvider = StateProvider<Locale>((ref) => const Locale('tr'));
 
+// First day of week provider: 1 = Monday (default), 7 = Sunday
+final firstDayOfWeekProvider = StateProvider<int>((ref) => 1);
+
 /// Bridges Riverpod auth state changes to a [ChangeNotifier] so GoRouter
 /// can re-evaluate its redirect without being fully recreated.
 class _AuthNotifierBridge extends ChangeNotifier {

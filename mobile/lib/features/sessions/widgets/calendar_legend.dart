@@ -9,12 +9,15 @@ class CalendarLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 16,
-        runSpacing: 8,
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          runAlignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 24,
+          runSpacing: 8,
         children: [
           _LegendItem(
             color: AppConstants.fullShiftColor,
@@ -31,16 +34,20 @@ class CalendarLegend extends StatelessWidget {
           _LegendItem(
             color: AppConstants.leaveColor,
             label: l10n.leave,
+            emoji: '\u{1F334}',
           ),
           _LegendItem(
             color: AppConstants.sickLeaveColor,
             label: l10n.sickLeave,
+            emoji: '\u{1F3E5}',
           ),
           _LegendItem(
             color: AppConstants.holidayColor,
             label: l10n.holiday,
+            emoji: '\u{1F389}',
           ),
         ],
+        ),
       ),
     );
   }
@@ -49,8 +56,9 @@ class CalendarLegend extends StatelessWidget {
 class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;
+  final String? emoji;
 
-  const _LegendItem({required this.color, required this.label});
+  const _LegendItem({required this.color, required this.label, this.emoji});
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +74,10 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
+        if (emoji != null) ...[
+          Text(emoji!, style: const TextStyle(fontSize: 10)),
+          const SizedBox(width: 3),
+        ],
         Text(
           label,
           style: const TextStyle(

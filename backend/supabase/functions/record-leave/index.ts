@@ -101,40 +101,48 @@ serve(async (req) => {
       throw new Error("Leave type not found");
     }
 
-    // Check leave balance — auto-create if missing
-    let { data: balance, error: balanceError } = await supabaseAdmin
-      .from("leave_balances")
-      .select("*")
-      .eq("employee_id", user.id)
-      .eq("leave_type_id", leave_type_id)
-      .eq("year", currentYear)
-      .maybeSingle();
+    const isDeductible = leaveType.is_deductible !== false;
 
-    if (!balance) {
-      // Auto-create balance using leave type defaults
-      const defaultDays = leaveType.default_days_per_year || 0;
-      const { data: newBalance, error: createError } = await supabaseAdmin
+    // Only manage balance for deductible leave types (skip sick leave etc.)
+    let balance: any = null;
+    if (isDeductible) {
+      // Check leave balance — auto-create if missing
+      const { data: existingBalance } = await supabaseAdmin
         .from("leave_balances")
-        .insert({
-          employee_id: user.id,
-          company_id: user.company_id,
-          leave_type_id,
-          year: currentYear,
-          total_days: defaultDays,
-          used_days: 0,
-        })
-        .select()
-        .single();
+        .select("*")
+        .eq("employee_id", user.id)
+        .eq("leave_type_id", leave_type_id)
+        .eq("year", currentYear)
+        .maybeSingle();
 
-      if (createError) throw new Error(`Failed to create leave balance: ${createError.message}`);
-      balance = newBalance;
-    }
+      balance = existingBalance;
 
-    // Only check balance if the leave type has a day limit (total_days > 0)
-    if (parseFloat(balance.total_days) > 0) {
-      const remainingDays = parseFloat(balance.total_days) - parseFloat(balance.used_days);
-      if (totalDays > remainingDays) {
-        throw new Error(`Insufficient leave balance. Available: ${remainingDays} days, Requested: ${totalDays} days`);
+      if (!balance) {
+        // Auto-create balance using leave type defaults
+        const defaultDays = leaveType.default_days_per_year || 0;
+        const { data: newBalance, error: createError } = await supabaseAdmin
+          .from("leave_balances")
+          .insert({
+            employee_id: user.id,
+            company_id: user.company_id,
+            leave_type_id,
+            year: currentYear,
+            total_days: defaultDays,
+            used_days: 0,
+          })
+          .select()
+          .single();
+
+        if (createError) throw new Error(`Failed to create leave balance: ${createError.message}`);
+        balance = newBalance;
+      }
+
+      // Only check balance if the leave type has a day limit (total_days > 0)
+      if (parseFloat(balance.total_days) > 0) {
+        const remainingDays = parseFloat(balance.total_days) - parseFloat(balance.used_days);
+        if (totalDays > remainingDays) {
+          throw new Error(`Insufficient leave balance. Available: ${remainingDays} days, Requested: ${totalDays} days`);
+        }
       }
     }
 
@@ -156,17 +164,19 @@ serve(async (req) => {
 
     if (recordError) throw new Error(`Failed to create leave record: ${recordError.message}`);
 
-    // 2. Atomically update leave balance (used_days += totalDays)
-    const newUsedDays = parseFloat(balance.used_days) + totalDays;
-    const { error: updateBalanceError } = await supabaseAdmin
-      .from("leave_balances")
-      .update({ used_days: newUsedDays })
-      .eq("id", balance.id);
+    // 2. Update leave balance only for deductible types
+    if (isDeductible && balance) {
+      const newUsedDays = parseFloat(balance.used_days) + totalDays;
+      const { error: updateBalanceError } = await supabaseAdmin
+        .from("leave_balances")
+        .update({ used_days: newUsedDays })
+        .eq("id", balance.id);
 
-    if (updateBalanceError) {
-      // Rollback: delete leave record
-      await supabaseAdmin.from("leave_records").delete().eq("id", leaveRecord.id);
-      throw new Error(`Failed to update leave balance: ${updateBalanceError.message}`);
+      if (updateBalanceError) {
+        // Rollback: delete leave record
+        await supabaseAdmin.from("leave_records").delete().eq("id", leaveRecord.id);
+        throw new Error(`Failed to update leave balance: ${updateBalanceError.message}`);
+      }
     }
 
     logActivity(supabaseAdmin, {

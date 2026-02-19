@@ -205,7 +205,7 @@ class _GradientSummaryCard extends StatelessWidget {
         // Left card: Aylık Çalışma
         Expanded(
           child: Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
@@ -226,19 +226,19 @@ class _GradientSummaryCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.work_history_outlined, color: Colors.white.withValues(alpha: 0.8), size: 18),
+                    Icon(Icons.work_history_outlined, color: Colors.white.withValues(alpha: 0.8), size: 20),
                     const SizedBox(width: 6),
                     Text(
                       l10n.monthlyWork,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 RichText(
                   text: TextSpan(
                     children: [
@@ -246,7 +246,7 @@ class _GradientSummaryCard extends StatelessWidget {
                         text: '$hours',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 30,
+                          fontSize: 36,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -254,7 +254,7 @@ class _GradientSummaryCard extends StatelessWidget {
                         text: l10n.hoursAbbrev,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -263,7 +263,7 @@ class _GradientSummaryCard extends StatelessWidget {
                         text: '$minutes',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 30,
+                          fontSize: 36,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -271,7 +271,7 @@ class _GradientSummaryCard extends StatelessWidget {
                         text: l10n.minutesAbbrev,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -286,7 +286,7 @@ class _GradientSummaryCard extends StatelessWidget {
         // Right card: Percentage (extra/missing)
         Expanded(
           child: Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -313,25 +313,25 @@ class _GradientSummaryCard extends StatelessWidget {
                     Icon(
                       isExtra ? Icons.trending_up : Icons.trending_down,
                       color: Colors.white.withValues(alpha: 0.8),
-                      size: 18,
+                      size: 20,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       diffLabel,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Text(
                   deviationStr,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 30,
+                    fontSize: 36,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -351,6 +351,13 @@ class _StatsGrid extends StatelessWidget {
 
   const _StatsGrid({required this.state, required this.l10n});
 
+  String _formatTimeFull(int totalMinutes) {
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    if (minutes == 0) return '$hours ${l10n.hoursFull}';
+    return '$hours ${l10n.hoursFull} $minutes ${l10n.minutesFull}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final netMin = state.netMinutes;
@@ -367,19 +374,15 @@ class _StatsGrid extends StatelessWidget {
             Expanded(child: _StatCard(
               icon: Icons.calendar_today,
               iconColor: AppConstants.primaryColor,
-              value: '${state.workDaysCount}',
-              label: l10n.workedDays,
+              title: l10n.workedDays,
+              value: '${state.workDaysCount} ${l10n.daysFull}',
             )),
             const SizedBox(width: 12),
             Expanded(child: _StatCard(
               icon: Icons.schedule_outlined,
               iconColor: const Color(0xFF6366F1),
-              value: AppDateUtils.formatDurationLocalized(
-                state.totalExpectedMinutes,
-                l10n.hoursAbbrev,
-                l10n.minutesAbbrev,
-              ),
-              label: l10n.expectedHours,
+              title: l10n.expectedHours,
+              value: _formatTimeFull(state.totalExpectedMinutes),
             )),
           ],
         ),
@@ -390,114 +393,56 @@ class _StatsGrid extends StatelessWidget {
             Expanded(child: _StatCard(
               icon: Icons.timer_outlined,
               iconColor: AppConstants.clockInColor,
-              value: AppDateUtils.formatDurationLocalized(
-                state.totalWorkedMinutes,
-                l10n.hoursAbbrev,
-                l10n.minutesAbbrev,
-              ),
-              label: l10n.totalDuration,
+              title: l10n.totalDuration,
+              value: _formatTimeFull(state.totalWorkedMinutes),
             )),
             const SizedBox(width: 12),
             Expanded(child: _StatCard(
               icon: netMin >= 0 ? Icons.trending_up : Icons.trending_down,
               iconColor: netColor,
-              value: '$netSign${AppDateUtils.formatDurationLocalized(
-                netMin.abs(),
-                l10n.hoursAbbrev,
-                l10n.minutesAbbrev,
-              )}',
-              label: l10n.netHours,
+              title: l10n.netHours,
+              value: '$netSign${_formatTimeFull(netMin.abs())}',
               valueColor: netColor,
             )),
           ],
         ),
         const SizedBox(height: 12),
-        // Row 3: Overtime Hours | OT %
-        Row(
-          children: [
-            Expanded(child: _StatCard(
-              icon: Icons.more_time_outlined,
-              iconColor: AppConstants.overtimeColor,
-              value: AppDateUtils.formatDurationLocalized(
-                state.overtimeValue.round(),
-                l10n.hoursAbbrev,
-                l10n.minutesAbbrev,
-              ),
-              label: l10n.overtimeHoursTotal,
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: _StatCard(
-              icon: Icons.percent_outlined,
-              iconColor: const Color(0xFFF59E0B),
-              value: '${state.overtimePercentage.toStringAsFixed(1)}%',
-              label: l10n.otPercent,
-            )),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Row 4: Deficit | OT Days
-        Row(
-          children: [
-            Expanded(child: _StatCard(
-              icon: Icons.remove_circle_outline,
-              iconColor: const Color(0xFFF43F5E),
-              value: state.totalDeficitMinutes > 0
-                  ? AppDateUtils.formatDurationLocalized(
-                      state.totalDeficitMinutes,
-                      l10n.hoursAbbrev,
-                      l10n.minutesAbbrev,
-                    )
-                  : l10n.none,
-              label: l10n.deficitHours,
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: _StatCard(
-              icon: Icons.event_available_outlined,
-              iconColor: const Color(0xFFF59E0B),
-              value: state.overtimeDays.toStringAsFixed(2),
-              label: l10n.otDays,
-            )),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Row 5: Late Days | Absent Days
-        Row(
-          children: [
-            Expanded(child: _StatCard(
-              icon: Icons.watch_later_outlined,
-              iconColor: const Color(0xFFF97316),
-              value: '${state.lateDaysCount}',
-              label: l10n.lateDays,
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: _StatCard(
-              icon: Icons.person_off_outlined,
-              iconColor: const Color(0xFFF43F5E),
-              value: '${state.absentDaysCount}',
-              label: l10n.absentDays,
-            )),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Row 6: Daily Average | Used Leave
+        // Row 3: Daily Average | Deficit
         Row(
           children: [
             Expanded(child: _StatCard(
               icon: Icons.speed_outlined,
               iconColor: AppConstants.overtimeColor,
-              value: AppDateUtils.formatDurationLocalized(
-                state.dailyAverageMinutes,
-                l10n.hoursAbbrev,
-                l10n.minutesAbbrev,
-              ),
-              label: l10n.dailyAverage,
+              title: l10n.dailyAverage,
+              value: _formatTimeFull(state.dailyAverageMinutes),
             )),
             const SizedBox(width: 12),
             Expanded(child: _StatCard(
+              icon: Icons.remove_circle_outline,
+              iconColor: const Color(0xFFF43F5E),
+              title: l10n.deficitHours,
+              value: state.totalDeficitMinutes > 0
+                  ? _formatTimeFull(state.totalDeficitMinutes)
+                  : l10n.none,
+            )),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Row 4: Annual Leave | Sick Leave
+        Row(
+          children: [
+            Expanded(child: _StatCard(
               icon: Icons.beach_access_outlined,
               iconColor: AppConstants.leaveColor,
-              value: '${state.usedLeaveDays}',
-              label: l10n.usedLeave,
+              title: l10n.annualLeaveUsage,
+              value: '${state.usedAnnualLeaveDays} ${l10n.daysFull}',
+            )),
+            const SizedBox(width: 12),
+            Expanded(child: _StatCard(
+              icon: Icons.local_hospital_outlined,
+              iconColor: AppConstants.sickLeaveColor,
+              title: l10n.sickLeaveUsage,
+              value: '${state.usedSickLeaveDays} ${l10n.daysFull}',
             )),
           ],
         ),
@@ -509,15 +454,15 @@ class _StatsGrid extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
+  final String title;
   final String value;
-  final String label;
   final Color? valueColor;
 
   const _StatCard({
     required this.icon,
     required this.iconColor,
+    required this.title,
     required this.value,
-    required this.label,
     this.valueColor,
   });
 
@@ -533,30 +478,30 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: iconColor),
+          Row(
+            children: [
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppConstants.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Text(
             value,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 17,
               fontWeight: FontWeight.w700,
               color: valueColor ?? AppConstants.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppConstants.textSecondary,
             ),
           ),
         ],

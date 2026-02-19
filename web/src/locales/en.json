@@ -129,7 +129,8 @@
     "initialBalance": "Initial Balance",
     "leaveEntitlements": "Leave Entitlements",
     "daysPerYear": "days/year",
-    "days": "days"
+    "days": "days",
+    "remainingLeave": "Remaining Leave"
   },
   "sessions": {
     "title": "Sessions",

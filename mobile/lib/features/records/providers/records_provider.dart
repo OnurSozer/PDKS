@@ -27,6 +27,8 @@ class RecordsState {
   final int lateDays;
   final int absentDays;
   final int leaveDays;
+  final int annualLeaveDays;
+  final int sickLeaveDays;
   final double overtimeMultiplier;
   final double monthlyConstant;
 
@@ -48,6 +50,8 @@ class RecordsState {
     this.lateDays = 0,
     this.absentDays = 0,
     this.leaveDays = 0,
+    this.annualLeaveDays = 0,
+    this.sickLeaveDays = 0,
     this.overtimeMultiplier = 1.5,
     this.monthlyConstant = 21.66,
   })  : selectedYear = selectedYear ?? DateTime.now().year,
@@ -101,6 +105,12 @@ class RecordsState {
   /// Used leave days this month
   int get usedLeaveDays => leaveDays;
 
+  /// Annual leave days used this month
+  int get usedAnnualLeaveDays => annualLeaveDays;
+
+  /// Sick leave days used this month
+  int get usedSickLeaveDays => sickLeaveDays;
+
   RecordsState copyWith({
     bool? isLoading,
     int? selectedYear,
@@ -119,6 +129,8 @@ class RecordsState {
     int? lateDays,
     int? absentDays,
     int? leaveDays,
+    int? annualLeaveDays,
+    int? sickLeaveDays,
     double? overtimeMultiplier,
     double? monthlyConstant,
   }) {
@@ -140,6 +152,8 @@ class RecordsState {
       lateDays: lateDays ?? this.lateDays,
       absentDays: absentDays ?? this.absentDays,
       leaveDays: leaveDays ?? this.leaveDays,
+      annualLeaveDays: annualLeaveDays ?? this.annualLeaveDays,
+      sickLeaveDays: sickLeaveDays ?? this.sickLeaveDays,
       overtimeMultiplier: overtimeMultiplier ?? this.overtimeMultiplier,
       monthlyConstant: monthlyConstant ?? this.monthlyConstant,
     );
@@ -214,6 +228,8 @@ class RecordsNotifier extends StateNotifier<RecordsState> {
         lateDays: empSummary?['late_days'] as int? ?? 0,
         absentDays: empSummary?['absent_days'] as int? ?? 0,
         leaveDays: empSummary?['leave_days'] as int? ?? 0,
+        annualLeaveDays: empSummary?['annual_leave_days'] as int? ?? 0,
+        sickLeaveDays: empSummary?['sick_leave_days'] as int? ?? 0,
         overtimeMultiplier: otMultiplier,
         monthlyConstant: monthlyConst,
       );
