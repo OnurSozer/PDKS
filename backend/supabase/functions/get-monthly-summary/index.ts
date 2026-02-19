@@ -12,11 +12,23 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization")!;
     const supabase = getSupabaseClient(authHeader);
     const user = await getAuthUser(supabase);
-    requireRole(user, ["operator", "super_admin"]);
+    requireRole(user, ["operator", "super_admin", "employee", "chef"]);
 
+    // Accept params from query string (GET/web) or POST body (mobile)
     const url = new URL(req.url);
-    const month = url.searchParams.get("month"); // e.g. "2026-02"
-    const employeeId = url.searchParams.get("employee_id");
+    let month = url.searchParams.get("month"); // e.g. "2026-02"
+    let employeeIdParam = url.searchParams.get("employee_id");
+    if (!month && req.method === "POST") {
+      try {
+        const body = await req.json();
+        month = body.month || null;
+        employeeIdParam = body.employee_id || null;
+      } catch { /* no body */ }
+    }
+    // Employees/chefs can only query their own data
+    const employeeId = (user.role === "employee" || user.role === "chef")
+      ? user.id
+      : employeeIdParam;
 
     if (!month || !/^\d{4}-\d{2}$/.test(month)) {
       throw new Error("month parameter is required in YYYY-MM format");
@@ -32,6 +44,7 @@ serve(async (req) => {
     const firstDay = `${month}-01`;
     const lastDay = new Date(year, monthNum, 0).toISOString().split("T")[0];
     const daysInMonth = new Date(year, monthNum, 0).getDate();
+    const today = new Date().toISOString().split("T")[0];
 
     // Fetch company work settings
     const { data: workSettings } = await supabaseAdmin
@@ -45,20 +58,23 @@ serve(async (req) => {
     const holidayMultiplier = workSettings ? parseFloat(workSettings.holiday_multiplier) : 2.0;
     const monthlyConstant = workSettings ? parseFloat(workSettings.monthly_work_days_constant) : 21.66;
 
-    // Fetch company holidays for this month
+    // Fetch company holidays for this month (with is_half_day)
     const { data: holidays } = await supabaseAdmin
       .from("company_holidays")
-      .select("holiday_date")
+      .select("holiday_date, is_half_day")
       .eq("company_id", companyId)
       .gte("holiday_date", firstDay)
       .lte("holiday_date", lastDay);
 
-    const holidayDates = new Set((holidays || []).map((h: any) => h.holiday_date));
+    const holidayMap = new Map<string, { isHalfDay: boolean }>();
+    for (const h of holidays || []) {
+      holidayMap.set(h.holiday_date, { isHalfDay: h.is_half_day === true });
+    }
 
     // Also check recurring holidays (match month-day regardless of year)
     const { data: recurringHolidays } = await supabaseAdmin
       .from("company_holidays")
-      .select("holiday_date")
+      .select("holiday_date, is_half_day")
       .eq("company_id", companyId)
       .eq("is_recurring", true);
 
@@ -68,7 +84,7 @@ serve(async (req) => {
         const rhMonthDay = rhDate.substring(5); // "MM-DD"
         const thisYearDate = `${yearStr}-${rhMonthDay}`;
         if (thisYearDate >= firstDay && thisYearDate <= lastDay) {
-          holidayDates.add(thisYearDate);
+          holidayMap.set(thisYearDate, { isHalfDay: rh.is_half_day === true });
         }
       }
     }
@@ -171,6 +187,28 @@ serve(async (req) => {
         summaryMap.set(s.summary_date, s);
       }
 
+      // Compute the employee's scheduled daily expected (constant from shift template)
+      let scheduleDailyExpected = 0;
+      {
+        const currentSchedule = empSchedules
+          .filter((s: any) => s.effective_from <= lastDay && (!s.effective_to || s.effective_to >= firstDay))
+          .sort((a: any, b: any) => b.effective_from.localeCompare(a.effective_from))[0];
+
+        if (currentSchedule) {
+          const tmpl = currentSchedule.shift_template;
+          const st = tmpl?.start_time || currentSchedule.custom_start_time;
+          const et = tmpl?.end_time || currentSchedule.custom_end_time;
+          if (st && et) {
+            const [sH, sM] = st.split(":").map(Number);
+            const [eH, eM] = et.split(":").map(Number);
+            let dm = (eH * 60 + eM) - (sH * 60 + sM);
+            if (dm < 0) dm += 1440;
+            const brk = tmpl?.break_duration_minutes ?? currentSchedule.custom_break_duration_minutes ?? 0;
+            scheduleDailyExpected = dm - brk;
+          }
+        }
+      }
+
       let totalWorkMinutes = 0;
       let totalExpectedMinutes = 0;
       let bossCallDays = 0;
@@ -224,11 +262,19 @@ serve(async (req) => {
         }
 
         // Determine work day type
-        let workDayType: "regular" | "weekend" | "holiday" = "regular";
-        if (holidayDates.has(dateStr)) {
-          workDayType = "holiday";
+        let workDayType: "regular" | "weekend" | "holiday" | "half_holiday" = "regular";
+        const holidayInfo = holidayMap.get(dateStr);
+        if (holidayInfo) {
+          workDayType = holidayInfo.isHalfDay ? "half_holiday" : "holiday";
         } else if (!isWorkDay) {
           workDayType = "weekend";
+        }
+
+        // Adjust expectedMinutes for holidays
+        if (workDayType === "holiday") {
+          expectedMinutes = 0;
+        } else if (workDayType === "half_holiday") {
+          expectedMinutes = Math.round(expectedMinutes / 2);
         }
 
         const summary = summaryMap.get(dateStr);
@@ -298,23 +344,28 @@ serve(async (req) => {
 
           if (dayIsLate) lateDays++;
           if (dayIsLeave) leaveDays++;
-        } else if (isWorkDay) {
-          // No summary = absent (never clocked in)
+        } else if (isWorkDay && dateStr < today) {
+          // No summary and date is before today = absent (never clocked in)
           dayIsAbsent = true;
           dayStatus = "absent";
           dayDeficit = expectedMinutes;
         }
 
-        // Track weekend/holiday work minutes
-        if (workDayType === "weekend" && contributed > 0) weekendWorkMinutes += contributed;
-        if (workDayType === "holiday" && contributed > 0) holidayWorkMinutes += contributed;
+        // Accumulate only for non-leave days; today/future only if employee actually worked or has meaningful data
+        const hasMeaningfulData = summary && (summary.total_work_minutes > 0 || summary.is_leave || summary.is_boss_call || summary.special_day_type_id);
+        if (!dayIsLeave && (hasMeaningfulData || dateStr < today) && (isWorkDay || (summary && (summary.total_work_minutes > 0 || hasSpecialDay || dayIsBossCall)))) {
+          // Track weekend/holiday work minutes
+          if (workDayType === "weekend" && contributed > 0) weekendWorkMinutes += contributed;
+          if (workDayType === "holiday" && contributed > 0) holidayWorkMinutes += contributed;
+          if (workDayType === "half_holiday" && contributed > expectedMinutes) {
+            holidayWorkMinutes += Math.max(0, contributed - expectedMinutes);
+          }
 
-        if (isWorkDay || (summary && (summary.total_work_minutes > 0 || hasSpecialDay || dayIsBossCall))) {
           workDays++;
           totalExpectedMinutes += expectedMinutes;
           totalWorkMinutes += contributed;
           totalDeficit += dayDeficit;
-          if (dayIsAbsent && !dayIsLeave) absentDays++;
+          if (dayIsAbsent) absentDays++;
         }
 
         dailyDetails.push({
@@ -353,8 +404,7 @@ serve(async (req) => {
       // Special day minutes already have their multiplier baked in.
       let overtimeValue = 0;
       if (netMinutes > 0) {
-        const expectedPerDay = totalExpectedMinutes / Math.max(workDays, 1);
-        const specialDaySurplus = totalSpecialDayMinutes - (totalSpecialDayDays * expectedPerDay);
+        const specialDaySurplus = totalSpecialDayMinutes - (totalSpecialDayDays * scheduleDailyExpected);
         // Weekend/holiday work is all surplus; subtract from net to get regular surplus
         const regularSurplus = netMinutes - weekendWorkMinutes - holidayWorkMinutes - Math.max(0, specialDaySurplus);
 
@@ -365,7 +415,7 @@ serve(async (req) => {
         if (specialDaySurplus > 0) overtimeValue += specialDaySurplus; // already multiplied
       }
 
-      const expectedDailyMinutes = totalExpectedMinutes / Math.max(workDays, 1);
+      const expectedDailyMinutes = scheduleDailyExpected;
       const overtimeDays = expectedDailyMinutes > 0 ? overtimeValue / expectedDailyMinutes : 0;
       const overtimePercentage = monthlyConstant > 0 ? (overtimeDays / monthlyConstant) * 100 : 0;
 
@@ -375,6 +425,7 @@ serve(async (req) => {
         work_days: workDays,
         total_work_minutes: totalWorkMinutes,
         expected_work_minutes: totalExpectedMinutes,
+        schedule_daily_expected: scheduleDailyExpected,
         boss_call_days: bossCallDays,
         boss_call_minutes: bossCallMinutes,
         special_day_stats: specialDayStats,

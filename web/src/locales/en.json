@@ -210,6 +210,8 @@
     "editHoliday": "Edit Holiday",
     "holidayName": "Holiday Name",
     "recurring": "Recurring Yearly",
+    "halfDay": "Half Day",
+    "fullDay": "Full Day",
     "holidayCreated": "Holiday created successfully",
     "holidayDeleted": "Holiday deleted successfully"
   },

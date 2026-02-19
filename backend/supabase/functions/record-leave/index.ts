@@ -35,12 +35,60 @@ serve(async (req) => {
       throw new Error("end_date must be on or after start_date");
     }
 
-    // Calculate total days (simple: end - start + 1, weekdays only could be added later)
-    const diffTime = endDate.getTime() - startDate.getTime();
-    const totalDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
     const supabaseAdmin = getSupabaseAdmin();
     const currentYear = startDate.getFullYear();
+
+    // Fetch holidays (exact + recurring) for the leave date range with is_half_day
+    const { data: exactHolidays } = await supabaseAdmin
+      .from("company_holidays")
+      .select("holiday_date, is_half_day")
+      .eq("company_id", user.company_id)
+      .eq("is_recurring", false)
+      .gte("holiday_date", start_date)
+      .lte("holiday_date", end_date);
+
+    const { data: recurringHolidays } = await supabaseAdmin
+      .from("company_holidays")
+      .select("holiday_date, is_half_day")
+      .eq("company_id", user.company_id)
+      .eq("is_recurring", true);
+
+    // Build holiday map for the leave range: dateStr -> { isHalfDay }
+    const holidayMap = new Map<string, { isHalfDay: boolean }>();
+    for (const h of exactHolidays || []) {
+      holidayMap.set(h.holiday_date, { isHalfDay: h.is_half_day === true });
+    }
+    if (recurringHolidays) {
+      const cursor = new Date(startDate);
+      while (cursor <= endDate) {
+        const cursorStr = cursor.toISOString().split("T")[0];
+        const cursorMonthDay = cursorStr.substring(5);
+        for (const rh of recurringHolidays) {
+          if ((rh.holiday_date as string).substring(5) === cursorMonthDay) {
+            holidayMap.set(cursorStr, { isHalfDay: rh.is_half_day === true });
+            break;
+          }
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+
+    // Calculate total days accounting for holidays
+    let totalDays = 0;
+    {
+      const cursor = new Date(startDate);
+      while (cursor <= endDate) {
+        const cursorStr = cursor.toISOString().split("T")[0];
+        const hol = holidayMap.get(cursorStr);
+        if (hol) {
+          // Half-day holiday: deduct 0.5, full holiday: deduct 0
+          totalDays += hol.isHalfDay ? 0.5 : 0;
+        } else {
+          totalDays += 1;
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
 
     // Get leave type info
     const { data: leaveType, error: ltError } = await supabaseAdmin

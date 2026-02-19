@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { useHolidays, useCreateHoliday, useUpdateHoliday, useDeleteHoliday } from '../../hooks/useHolidays';
+import { supabase } from '../../lib/supabase';
 import { CompanyHoliday } from '../../types';
 import { Plus, Trash2, Edit2, X, Calendar, RotateCcw } from 'lucide-react';
 
@@ -17,16 +18,49 @@ export function HolidaysPage() {
   const [name, setName] = useState('');
   const [holidayDate, setHolidayDate] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [isHalfDay, setIsHalfDay] = useState(false);
 
   const { data: holidays, isLoading } = useHolidays(companyId, selectedYear);
   const createMutation = useCreateHoliday();
   const updateMutation = useUpdateHoliday();
   const deleteMutation = useDeleteHoliday();
 
+  // Recalculate daily summaries for all employees on a given date
+  const recalculateSummariesForDate = async (date: string) => {
+    if (!companyId) return;
+    try {
+      const { data: employees } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('company_id', companyId)
+        .in('role', ['employee', 'chef'])
+        .eq('is_active', true);
+
+      if (!employees) return;
+
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      await Promise.all(
+        employees.map((emp) =>
+          fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/recalculate-daily-summary`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ employee_id: emp.id, date }),
+          }).catch(() => {})
+        )
+      );
+    } catch {
+      // Non-critical — summaries will be recalculated on next clock event
+    }
+  };
+
   const resetForm = () => {
     setName('');
     setHolidayDate('');
     setIsRecurring(false);
+    setIsHalfDay(false);
     setEditingHoliday(null);
     setShowForm(false);
   };
@@ -35,21 +69,37 @@ export function HolidaysPage() {
     e.preventDefault();
     if (!companyId || !name || !holidayDate) return;
 
+    const datesToRecalculate: string[] = [];
+
     if (editingHoliday) {
+      // If date changed, recalculate both old and new dates
+      if (editingHoliday.holiday_date !== holidayDate) {
+        datesToRecalculate.push(editingHoliday.holiday_date);
+      }
+      datesToRecalculate.push(holidayDate);
       await updateMutation.mutateAsync({
         id: editingHoliday.id,
         name,
         holiday_date: holidayDate,
         is_recurring: isRecurring,
+        is_half_day: isHalfDay,
       });
     } else {
+      datesToRecalculate.push(holidayDate);
       await createMutation.mutateAsync({
         company_id: companyId,
         name,
         holiday_date: holidayDate,
         is_recurring: isRecurring,
+        is_half_day: isHalfDay,
       });
     }
+
+    // Recalculate daily summaries in background
+    for (const d of datesToRecalculate) {
+      recalculateSummariesForDate(d);
+    }
+
     resetForm();
   };
 
@@ -58,12 +108,17 @@ export function HolidaysPage() {
     setName(holiday.name);
     setHolidayDate(holiday.holiday_date);
     setIsRecurring(holiday.is_recurring);
+    setIsHalfDay(holiday.is_half_day);
     setShowForm(true);
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm(t('common.confirm'))) {
+      const holiday = holidays?.find((h) => h.id === id);
       await deleteMutation.mutateAsync(id);
+      if (holiday) {
+        recalculateSummariesForDate(holiday.holiday_date);
+      }
     }
   };
 
@@ -142,7 +197,7 @@ export function HolidaysPage() {
                   className={inputClasses}
                 />
               </div>
-              <div className="flex items-end gap-3">
+              <div className="flex items-end gap-4">
                 <label className="flex items-center gap-2 cursor-pointer pb-2">
                   <input
                     type="checkbox"
@@ -152,6 +207,15 @@ export function HolidaysPage() {
                   />
                   <span className="text-sm text-zinc-200">{t('holidays.recurring')}</span>
                   <RotateCcw className="w-3 h-3 text-zinc-500" />
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer pb-2">
+                  <input
+                    type="checkbox"
+                    checked={isHalfDay}
+                    onChange={(e) => setIsHalfDay(e.target.checked)}
+                    className="w-4 h-4 text-amber-500 bg-zinc-800 border-zinc-600 rounded focus:ring-amber-500/20"
+                  />
+                  <span className="text-sm text-zinc-200">{t('holidays.halfDay')}</span>
                 </label>
               </div>
             </div>
@@ -194,6 +258,9 @@ export function HolidaysPage() {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                   {t('holidays.recurring')}
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                  {t('monthlySummary.type')}
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                   {t('common.actions')}
                 </th>
@@ -216,6 +283,17 @@ export function HolidaysPage() {
                       </span>
                     ) : (
                       <span className="text-zinc-500">{t('common.no')}</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    {holiday.is_half_day ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/10 text-orange-400">
+                        {t('holidays.halfDay')}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-400">
+                        {t('holidays.fullDay')}
+                      </span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">

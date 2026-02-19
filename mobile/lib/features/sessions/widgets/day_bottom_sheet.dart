@@ -396,7 +396,9 @@ class DayBottomSheet extends StatelessWidget {
       return (l10n.leave, AppConstants.leaveColor.withValues(alpha: 0.15), AppConstants.leaveColor);
     }
     if (status == 'holiday') {
-      return (l10n.holiday, AppConstants.mealReadyColor.withValues(alpha: 0.15), AppConstants.mealReadyColor);
+      final workDayType = dailySummary?['work_day_type'] as String? ?? '';
+      final label = workDayType == 'half_holiday' ? l10n.halfDayHoliday : l10n.holiday;
+      return (label, AppConstants.holidayColor.withValues(alpha: 0.15), AppConstants.holidayColor);
     }
     if (status == 'absent') {
       return (l10n.absent, AppConstants.errorColor.withValues(alpha: 0.15), AppConstants.errorColor);

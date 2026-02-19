@@ -306,6 +306,12 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
           } else {
             statuses[dateStr] = 'leave';
           }
+        } else if (dayStatus == 'holiday') {
+          final workDayType = s['work_day_type'] as String? ?? '';
+          statuses[dateStr] = workDayType == 'half_holiday' ? 'half_holiday' : 'holiday';
+        } else if (s['is_holiday'] == true) {
+          final workDayType = s['work_day_type'] as String? ?? '';
+          statuses[dateStr] = workDayType == 'half_holiday' ? 'half_holiday' : 'holiday';
         } else if (overtime > 0) {
           statuses[dateStr] = 'overtime';
         } else if (totalWork > 0 && totalWork >= expected) {

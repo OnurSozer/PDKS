@@ -36,6 +36,10 @@ class CalendarLegend extends StatelessWidget {
             color: AppConstants.sickLeaveColor,
             label: l10n.sickLeave,
           ),
+          _LegendItem(
+            color: AppConstants.holidayColor,
+            label: l10n.holiday,
+          ),
         ],
       ),
     );

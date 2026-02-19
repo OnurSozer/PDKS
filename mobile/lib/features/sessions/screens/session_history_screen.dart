@@ -747,9 +747,31 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
 
   void _showLeaveConfirmation(DateTime date, {required bool isSickLeave}) {
     final l10n = AppLocalizations.of(context);
+    final state = ref.read(sessionHistoryProvider);
     final leaveTypeName = isSickLeave ? l10n.sickLeave : l10n.normalLeave;
     final iconColor = isSickLeave ? AppConstants.clockInColor : AppConstants.mealReadyColor;
     final icon = isSickLeave ? Icons.local_hospital : Icons.beach_access;
+
+    // Check if this date is a half-day holiday
+    final workDayType = state.dailySummary?['work_day_type'] as String? ?? '';
+    final isHalfDayHoliday = workDayType == 'half_holiday';
+    final isFullHoliday = workDayType == 'holiday';
+
+    String dayLabel;
+    String deductionLabel;
+    if (isSickLeave) {
+      dayLabel = isHalfDayHoliday ? l10n.halfDayHoliday : l10n.fullDay;
+      deductionLabel = l10n.noDeductionInfo;
+    } else if (isFullHoliday) {
+      dayLabel = l10n.holiday;
+      deductionLabel = l10n.noDeductionInfo;
+    } else if (isHalfDayHoliday) {
+      dayLabel = l10n.halfDayHoliday;
+      deductionLabel = l10n.halfDayDeductionInfo;
+    } else {
+      dayLabel = l10n.fullDay;
+      deductionLabel = l10n.deductionInfo;
+    }
 
     showDialog(
       context: context,
@@ -793,7 +815,7 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          l10n.fullDay,
+                          dayLabel,
                           style: TextStyle(
                             color: iconColor,
                             fontWeight: FontWeight.w700,
@@ -801,7 +823,7 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          isSickLeave ? l10n.noDeductionInfo : l10n.deductionInfo,
+                          deductionLabel,
                           style: const TextStyle(color: AppConstants.textSecondary, fontSize: 12),
                         ),
                       ],
@@ -838,8 +860,12 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
 
     Navigator.of(dialogContext).pop(); // Close confirmation dialog
 
-    // Find matching leave type from leave provider
-    final leaveState = ref.read(leaveProvider);
+    // Ensure leave types are loaded before checking
+    var leaveState = ref.read(leaveProvider);
+    if (leaveState.leaveTypes.isEmpty) {
+      await ref.read(leaveProvider.notifier).loadAll();
+      leaveState = ref.read(leaveProvider);
+    }
     final leaveTypes = leaveState.leaveTypes;
 
     // Try to find a matching leave type

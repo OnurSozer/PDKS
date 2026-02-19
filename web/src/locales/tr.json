@@ -210,6 +210,8 @@
     "editHoliday": "Tatil Düzenle",
     "holidayName": "Tatil Adı",
     "recurring": "Her Yıl Tekrarla",
+    "halfDay": "Yarım Gün",
+    "fullDay": "Tam Gün",
     "holidayCreated": "Tatil başarıyla oluşturuldu",
     "holidayDeleted": "Tatil başarıyla silindi"
   },

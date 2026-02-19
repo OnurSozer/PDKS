@@ -97,6 +97,7 @@ class AppLocalizations {
   String get lateLabel => get('late');
   String get absent => get('absent');
   String get holiday => get('holiday');
+  String get halfDayHoliday => get('half_day_holiday');
   String get missing => get('missing');
   String get extra => get('extra');
 
@@ -218,6 +219,7 @@ class AppLocalizations {
   String get sickLeaveSubtitle => get('sick_leave_subtitle');
   String get fullDay => get('full_day');
   String get deductionInfo => get('deduction_info');
+  String get halfDayDeductionInfo => get('half_day_deduction_info');
   String get noDeductionInfo => get('no_deduction_info');
   String get markButton => get('mark_button');
   String get creatingSession => get('creating_session');
@@ -344,6 +346,7 @@ class AppLocalizations {
     'late': 'LATE',
     'absent': 'Absent',
     'holiday': 'Holiday',
+    'half_day_holiday': 'Half-Day Holiday',
     'missing': 'Missing',
     'extra': 'Extra',
 
@@ -460,6 +463,7 @@ class AppLocalizations {
     'sick_leave_subtitle': 'Not deducted from balance',
     'full_day': 'Full Day',
     'deduction_info': '1 day will be deducted from balance.',
+    'half_day_deduction_info': '0.5 days will be deducted from balance.',
     'no_deduction_info': 'Not deducted from balance.',
     'mark_button': 'Mark',
     'creating_session': 'Creating...',
@@ -577,6 +581,7 @@ class AppLocalizations {
     'late': 'GEÇ',
     'absent': 'Devamsız',
     'holiday': 'Tatil',
+    'half_day_holiday': 'Yarım Gün Tatil',
     'missing': 'Eksik',
     'extra': 'Fazla',
 
@@ -693,6 +698,7 @@ class AppLocalizations {
     'sick_leave_subtitle': 'İzin bakiyesinden düşülmez',
     'full_day': 'Tam Gün',
     'deduction_info': 'İzin bakiyesinden 1 gün düşülecek.',
+    'half_day_deduction_info': 'İzin bakiyesinden 0.5 gün düşülecek.',
     'no_deduction_info': 'İzin bakiyesinden düşülmeyecek.',
     'mark_button': 'İşaretle',
     'creating_session': 'Oluşturuluyor...',

@@ -151,30 +151,29 @@ serve(async (req) => {
 
     const isAbsent = status === "absent" && !isLeave;
 
-    // Calculate deficit minutes
-    const deficitMinutes = Math.max(0, expectedWorkMinutes - totalWorkMinutes);
-
     // Determine work_day_type
     let workDayType = passedWorkDayType || "regular";
     let isHoliday = passedIsHoliday || false;
+    let isHalfDayHoliday = false;
 
     // If not passed from calculate-session, determine it ourselves
     if (!passedWorkDayType && profile.company_id) {
       const { data: holidayCheck } = await supabaseAdmin
         .from("company_holidays")
-        .select("id")
+        .select("id, is_half_day")
         .eq("company_id", profile.company_id)
         .eq("holiday_date", date)
         .limit(1);
 
       if (holidayCheck && holidayCheck.length > 0) {
-        workDayType = "holiday";
         isHoliday = true;
+        isHalfDayHoliday = holidayCheck[0].is_half_day === true;
+        workDayType = isHalfDayHoliday ? "half_holiday" : "holiday";
       } else {
         // Check recurring
         const { data: recurringCheck } = await supabaseAdmin
           .from("company_holidays")
-          .select("holiday_date")
+          .select("holiday_date, is_half_day")
           .eq("company_id", profile.company_id)
           .eq("is_recurring", true);
 
@@ -182,8 +181,9 @@ serve(async (req) => {
           const dateMonthDay = date.substring(5);
           for (const rh of recurringCheck) {
             if ((rh.holiday_date as string).substring(5) === dateMonthDay) {
-              workDayType = "holiday";
               isHoliday = true;
+              isHalfDayHoliday = rh.is_half_day === true;
+              workDayType = isHalfDayHoliday ? "half_holiday" : "holiday";
               break;
             }
           }
@@ -194,6 +194,18 @@ serve(async (req) => {
         }
       }
     }
+
+    // Adjust expectedWorkMinutes for holidays (only if not on leave, which already set it to 0)
+    if (isHoliday && !isLeave) {
+      if (isHalfDayHoliday) {
+        expectedWorkMinutes = Math.round(expectedWorkMinutes / 2);
+      } else {
+        expectedWorkMinutes = 0;
+      }
+    }
+
+    // Calculate deficit minutes (after holiday adjustment)
+    const deficitMinutes = Math.max(0, expectedWorkMinutes - totalWorkMinutes);
 
     // Preserve existing special day type (only toggle-special-day / toggle-boss-call changes it)
     let isBossCall = false;

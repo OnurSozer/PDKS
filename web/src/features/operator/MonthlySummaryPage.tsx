@@ -366,6 +366,8 @@ export function MonthlySummaryPage() {
                                           className={`px-1.5 py-0.5 rounded text-xs ${
                                             day.work_day_type === 'holiday'
                                               ? 'bg-red-500/10 text-red-400'
+                                              : day.work_day_type === 'half_holiday'
+                                              ? 'bg-orange-500/10 text-orange-400'
                                               : day.work_day_type === 'weekend'
                                               ? 'bg-blue-500/10 text-blue-400'
                                               : 'bg-zinc-800 text-zinc-400'
@@ -377,7 +379,7 @@ export function MonthlySummaryPage() {
                                               {'\u00d7'}{settings?.weekend_multiplier || 1.5}
                                             </span>
                                           )}
-                                          {day.work_day_type === 'holiday' && day.total_work_minutes > 0 && (
+                                          {(day.work_day_type === 'holiday' || day.work_day_type === 'half_holiday') && day.total_work_minutes > 0 && (
                                             <span className="ml-1 text-amber-400 font-semibold">
                                               {'\u00d7'}{settings?.holiday_multiplier || 2.0}
                                             </span>

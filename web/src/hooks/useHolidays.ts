@@ -35,6 +35,7 @@ export function useCreateHoliday() {
       name: string;
       holiday_date: string;
       is_recurring: boolean;
+      is_half_day: boolean;
     }) => {
       const { data, error } = await supabase
         .from('company_holidays')
@@ -54,7 +55,7 @@ export function useUpdateHoliday() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; name?: string; holiday_date?: string; is_recurring?: boolean }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; name?: string; holiday_date?: string; is_recurring?: boolean; is_half_day?: boolean }) => {
       const { data, error } = await supabase
         .from('company_holidays')
         .update(updates)

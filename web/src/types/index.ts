@@ -116,7 +116,7 @@ export interface DailySummary {
   is_boss_call: boolean;
   special_day_type_id?: string | null;
   effective_work_minutes: number;
-  work_day_type: 'regular' | 'weekend' | 'holiday';
+  work_day_type: 'regular' | 'weekend' | 'holiday' | 'half_holiday';
   status: 'pending' | 'complete' | 'incomplete' | 'leave' | 'absent' | 'holiday';
   created_at?: string;
   updated_at?: string;
@@ -200,6 +200,7 @@ export interface CompanyHoliday {
   name: string;
   holiday_date: string;
   is_recurring: boolean;
+  is_half_day: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -272,7 +273,7 @@ export interface MonthlyEmployeeSummary {
 export interface MonthlyDayDetail {
   date: string;
   is_work_day: boolean;
-  work_day_type: 'regular' | 'weekend' | 'holiday';
+  work_day_type: 'regular' | 'weekend' | 'holiday' | 'half_holiday';
   total_work_minutes: number;
   expected_work_minutes: number;
   effective_work_minutes: number;
