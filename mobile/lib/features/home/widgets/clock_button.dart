@@ -6,12 +6,14 @@ class ClockButton extends StatelessWidget {
   final bool isClockedIn;
   final bool isLoading;
   final VoidCallback onPressed;
+  final VoidCallback? onLongPress;
 
   const ClockButton({
     super.key,
     required this.isClockedIn,
     required this.isLoading,
     required this.onPressed,
+    this.onLongPress,
   });
 
   @override
@@ -27,6 +29,7 @@ class ClockButton extends StatelessWidget {
 
     return GestureDetector(
       onTap: isLoading ? null : onPressed,
+      onLongPress: isLoading ? null : onLongPress,
       child: Container(
         width: AppConstants.clockButtonSize,
         height: AppConstants.clockButtonSize,

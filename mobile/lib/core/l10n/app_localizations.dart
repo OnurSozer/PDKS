@@ -251,6 +251,14 @@ class AppLocalizations {
   String get onSickLeaveToday => get('on_sick_leave_today');
   String get cancelLeaveDay => get('cancel_leave_day');
 
+  // ---- Custom Time ----
+  String get customTimeHint => get('custom_time_hint');
+  String get selectClockInTime => get('select_clock_in_time');
+  String get selectClockOutTime => get('select_clock_out_time');
+  String get customClockInSuccess => get('custom_clock_in_success');
+  String get customClockOutSuccess => get('custom_clock_out_success');
+  String get futureTimeError => get('future_time_error');
+
   // ---- Settings ----
   String get firstDayOfWeek => get('first_day_of_week');
   String get sundayOption => get('sunday_option');
@@ -537,6 +545,14 @@ class AppLocalizations {
     'day_sat': 'Sat',
     'day_sun': 'Sun',
 
+    // Custom Time
+    'custom_time_hint': 'Long press for custom time',
+    'select_clock_in_time': 'Select Clock-In Time',
+    'select_clock_out_time': 'Select Clock-Out Time',
+    'custom_clock_in_success': 'Clocked in with custom time',
+    'custom_clock_out_success': 'Clocked out with custom time',
+    'future_time_error': 'Cannot select a future time',
+
     // Settings
     'first_day_of_week': 'First Day of Week',
     'sunday_option': 'Sunday',
@@ -785,6 +801,14 @@ class AppLocalizations {
     'day_fri': 'Cum',
     'day_sat': 'Cmt',
     'day_sun': 'Paz',
+
+    // Custom Time
+    'custom_time_hint': 'Özel saat için uzun basın',
+    'select_clock_in_time': 'Giriş Saatini Seçin',
+    'select_clock_out_time': 'Çıkış Saatini Seçin',
+    'custom_clock_in_success': 'Özel saatle giriş yapıldı',
+    'custom_clock_out_success': 'Özel saatle çıkış yapıldı',
+    'future_time_error': 'İleri bir saat seçilemez',
 
     // Settings
     'first_day_of_week': 'Haftanın İlk Günü',

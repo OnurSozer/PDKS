@@ -602,6 +602,7 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
         final picked = await showTimePicker(
           context: context,
           initialTime: time,
+          initialEntryMode: TimePickerEntryMode.input,
         );
         if (picked != null) onPicked(picked);
       },

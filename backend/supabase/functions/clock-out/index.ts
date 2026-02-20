@@ -15,7 +15,7 @@ serve(async (req) => {
     const user = await getAuthUser(supabase);
     requireRole(user, ["employee", "chef", "operator"]);
 
-    const { session_id } = await req.json();
+    const { session_id, clock_out_time } = await req.json();
     if (!session_id) throw new Error("session_id is required");
 
     // Fetch the session (RLS will enforce access control)
@@ -36,7 +36,26 @@ serve(async (req) => {
     }
 
     const now = new Date();
-    const turkeyNow = now.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" });
+    const turkeyNowStr = now.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" });
+
+    let turkeyNow: string;
+    if (clock_out_time) {
+      const custom = new Date(clock_out_time);
+      if (isNaN(custom.getTime())) throw new Error("Invalid clock_out_time format");
+
+      // Must not be in the future
+      if (custom > now) throw new Error("Cannot select a future time");
+
+      const customTurkey = custom.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" });
+
+      // Must be after clock_in
+      const clockInTime = new Date(session.clock_in);
+      if (custom <= clockInTime) throw new Error("Clock-out time must be after clock-in time");
+
+      turkeyNow = customTurkey;
+    } else {
+      turkeyNow = turkeyNowStr;
+    }
     const submittedBy = user.role === "operator" ? "operator" : "employee";
 
     // Update the session with clock_out

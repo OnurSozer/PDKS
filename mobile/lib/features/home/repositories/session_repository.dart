@@ -9,18 +9,26 @@ class SessionRepository {
         : data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> clockIn() async {
+  Future<Map<String, dynamic>> clockIn({DateTime? customTime}) async {
+    final body = <String, dynamic>{};
+    if (customTime != null) {
+      body['clock_in_time'] = customTime.toIso8601String();
+    }
     final response = await _client.functions.invoke(
       'clock-in',
-      body: {},
+      body: body,
     );
     return _parseResponse(response.data);
   }
 
-  Future<Map<String, dynamic>> clockOut(String sessionId) async {
+  Future<Map<String, dynamic>> clockOut(String sessionId, {DateTime? customTime}) async {
+    final body = <String, dynamic>{'session_id': sessionId};
+    if (customTime != null) {
+      body['clock_out_time'] = customTime.toIso8601String();
+    }
     final response = await _client.functions.invoke(
       'clock-out',
-      body: {'session_id': sessionId},
+      body: body,
     );
     return _parseResponse(response.data);
   }

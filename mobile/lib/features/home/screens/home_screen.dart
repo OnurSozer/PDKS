@@ -83,6 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   final time = await showTimePicker(
                     context: ctx,
                     initialTime: selectedTime,
+                    initialEntryMode: TimePickerEntryMode.input,
                   );
                   if (time != null) {
                     setDialogState(() => selectedTime = time);
@@ -260,8 +261,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                               isClockedIn: sessionState.isClockedIn,
                               isLoading: sessionState.isLoading,
                               onPressed: () => _handleClockAction(sessionState, l10n),
+                              onLongPress: () => _handleClockLongPress(sessionState, l10n),
                             ),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 8),
+                            Text(
+                              l10n.customTimeHint,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppConstants.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
 
                             // Meal Ready button (Chef only)
                             if (isChef)
@@ -290,6 +300,83 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       return '${l10n.clockedInSince} ${AppDateUtils.formatTime(clockIn)}';
     }
     return l10n.notClockedIn;
+  }
+
+  Future<void> _handleClockLongPress(
+      SessionState sessionState, AppLocalizations l10n) async {
+    final now = TimeOfDay.fromDateTime(DateTime.now());
+    final title = sessionState.isClockedIn
+        ? l10n.selectClockOutTime
+        : l10n.selectClockInTime;
+
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: now,
+      helpText: title,
+      initialEntryMode: TimePickerEntryMode.input,
+    );
+    if (selectedTime == null || !mounted) return;
+
+    final today = DateTime.now();
+    final customDateTime = DateTime(
+      today.year,
+      today.month,
+      today.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+
+    // Validate not in the future
+    if (customDateTime.isAfter(DateTime.now())) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.futureTimeError),
+            backgroundColor: AppConstants.errorColor,
+          ),
+        );
+      }
+      return;
+    }
+
+    bool success;
+    if (sessionState.isClockedIn) {
+      success = await ref
+          .read(sessionProvider.notifier)
+          .clockOut(customTime: customDateTime);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.customClockOutSuccess),
+            backgroundColor: AppConstants.clockOutColor,
+          ),
+        );
+      }
+    } else {
+      success = await ref
+          .read(sessionProvider.notifier)
+          .clockIn(customTime: customDateTime);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.customClockInSuccess),
+            backgroundColor: AppConstants.clockInColor,
+          ),
+        );
+      }
+    }
+
+    if (!success && mounted) {
+      final error = ref.read(sessionProvider).error;
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error),
+            backgroundColor: AppConstants.errorColor,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _handleClockAction(

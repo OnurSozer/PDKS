@@ -86,10 +86,10 @@ class SessionNotifier extends StateNotifier<SessionState> {
     }
   }
 
-  Future<bool> clockIn() async {
+  Future<bool> clockIn({DateTime? customTime}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      await _repository.clockIn();
+      await _repository.clockIn(customTime: customTime);
       await loadTodayData();
       return true;
     } catch (e) {
@@ -98,13 +98,13 @@ class SessionNotifier extends StateNotifier<SessionState> {
     }
   }
 
-  Future<bool> clockOut() async {
+  Future<bool> clockOut({DateTime? customTime}) async {
     final sessionId = state.activeSession?['id'] as String?;
     if (sessionId == null) return false;
 
     state = state.copyWith(isLoading: true, error: null);
     try {
-      await _repository.clockOut(sessionId);
+      await _repository.clockOut(sessionId, customTime: customTime);
       // Immediately clear active session so button flips to Start
       state = state.copyWith(isLoading: false, clearActiveSession: true);
       // Refresh full data in background

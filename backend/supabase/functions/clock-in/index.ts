@@ -29,10 +29,31 @@ serve(async (req) => {
       throw new Error("You already have an open session. Please clock out first.");
     }
 
+    // Accept optional custom clock-in time
+    let body: { clock_in_time?: string } = {};
+    try { body = await req.json(); } catch { /* no body = use current time */ }
+
     const now = new Date();
-    // Format as Turkey local time (consistent with manual sessions)
-    const turkeyNow = now.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" });
-    // turkeyNow = "2026-02-18 09:30:00"
+    const turkeyNowStr = now.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" });
+
+    let turkeyNow: string;
+    if (body.clock_in_time) {
+      // Validate the custom time
+      const custom = new Date(body.clock_in_time);
+      if (isNaN(custom.getTime())) throw new Error("Invalid clock_in_time format");
+
+      const customTurkey = custom.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" });
+      const customDate = customTurkey.split(" ")[0];
+      const todayDate = turkeyNowStr.split(" ")[0];
+
+      if (customDate !== todayDate) throw new Error("Custom time must be today");
+      if (custom > now) throw new Error("Cannot select a future time");
+
+      turkeyNow = customTurkey;
+    } else {
+      turkeyNow = turkeyNowStr;
+    }
+
     const sessionDate = turkeyNow.split(" ")[0];
 
     const { data: session, error: insertError } = await supabase
