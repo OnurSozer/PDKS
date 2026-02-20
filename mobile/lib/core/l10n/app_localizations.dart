@@ -258,6 +258,7 @@ class AppLocalizations {
   String get customClockInSuccess => get('custom_clock_in_success');
   String get customClockOutSuccess => get('custom_clock_out_success');
   String get futureTimeError => get('future_time_error');
+  String get leaveSessionConflict => get('leave_session_conflict');
 
   // ---- Settings ----
   String get firstDayOfWeek => get('first_day_of_week');
@@ -552,6 +553,7 @@ class AppLocalizations {
     'custom_clock_in_success': 'Clocked in with custom time',
     'custom_clock_out_success': 'Clocked out with custom time',
     'future_time_error': 'Cannot select a future time',
+    'leave_session_conflict': 'Cannot mark leave: this day has work sessions',
 
     // Settings
     'first_day_of_week': 'First Day of Week',
@@ -809,6 +811,7 @@ class AppLocalizations {
     'custom_clock_in_success': 'Özel saatle giriş yapıldı',
     'custom_clock_out_success': 'Özel saatle çıkış yapıldı',
     'future_time_error': 'İleri bir saat seçilemez',
+    'leave_session_conflict': 'İzin işaretlenemez: bu günde çalışma seansı var',
 
     // Settings
     'first_day_of_week': 'Haftanın İlk Günü',

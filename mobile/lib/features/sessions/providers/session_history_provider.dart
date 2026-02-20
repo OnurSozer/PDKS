@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../home/repositories/session_repository.dart';
 import '../../home/providers/session_provider.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -67,18 +69,63 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
   final SessionRepository _repository;
   final String? _employeeId;
   final Map<String, _DateCache> _cache = {};
+  SharedPreferences? _prefs;
   int _prefetchedMonth = 0; // tracks which month we already bulk-fetched
   int _prefetchedYear = 0;
 
   SessionHistoryNotifier(this._repository, this._employeeId)
       : super(SessionHistoryState()) {
     if (_employeeId != null) {
-      final now = DateTime.now();
-      // Pre-fetch entire month data, then show today
-      _prefetchMonth(now.year, now.month).then((_) {
-        loadSessionsForDate(now);
-      });
-      loadMonthStatuses(now.year, now.month);
+      _init();
+    }
+  }
+
+  Future<void> _init() async {
+    _prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    // Show persisted data for current month instantly
+    _applyCachedMonth(now.year, now.month);
+    // Pre-fetch entire month data, then show today
+    _prefetchMonth(now.year, now.month).then((_) {
+      loadSessionsForDate(now);
+    });
+    loadMonthStatuses(now.year, now.month);
+  }
+
+  String _statusKey(String monthKey) => 'cal_status_${_employeeId}_$monthKey';
+  String _leaveKey(String monthKey) => 'cal_leave_${_employeeId}_$monthKey';
+
+  Map<String, String>? _getCachedStatuses(String monthKey) {
+    final raw = _prefs?.getString(_statusKey(monthKey));
+    if (raw == null) return null;
+    return Map<String, String>.from(json.decode(raw) as Map);
+  }
+
+  Map<String, String>? _getCachedLeaveTypes(String monthKey) {
+    final raw = _prefs?.getString(_leaveKey(monthKey));
+    if (raw == null) return null;
+    return Map<String, String>.from(json.decode(raw) as Map);
+  }
+
+  void _saveCachedMonth(String monthKey, Map<String, String> statuses, Map<String, String> leaveTypes) {
+    _prefs?.setString(_statusKey(monthKey), json.encode(statuses));
+    _prefs?.setString(_leaveKey(monthKey), json.encode(leaveTypes));
+  }
+
+  void _removeCachedMonth(String monthKey) {
+    _prefs?.remove(_statusKey(monthKey));
+    _prefs?.remove(_leaveKey(monthKey));
+  }
+
+  void _applyCachedMonth(int year, int month) {
+    final cacheKey = '$year-$month';
+    final cachedStatuses = _getCachedStatuses(cacheKey);
+    final cachedLeaveTypes = _getCachedLeaveTypes(cacheKey);
+    if (cachedStatuses != null) {
+      state = state.copyWith(
+        monthDayStatuses: cachedStatuses,
+        leaveTypeByDate: cachedLeaveTypes ?? {},
+      );
     }
   }
 
@@ -201,10 +248,19 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
 
   Future<void> loadMonthStatuses(int year, int month) async {
     if (_employeeId == null) return;
+
+    final cacheKey = '$year-$month';
+    final cachedStatuses = _getCachedStatuses(cacheKey);
+    final cachedLeaveTypes = _getCachedLeaveTypes(cacheKey);
+
+    // Show cached data immediately (or empty if first load)
     state = state.copyWith(
       selectedYear: year,
       selectedMonth: month,
+      monthDayStatuses: cachedStatuses ?? {},
+      leaveTypeByDate: cachedLeaveTypes ?? {},
     );
+
     try {
       final monthDate = DateTime(year, month, 1);
       final endDate = DateTime(year, month + 1, 0);
@@ -320,10 +376,16 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
           statuses[dateStr] = 'missing';
         }
       }
-      state = state.copyWith(
-        monthDayStatuses: statuses,
-        leaveTypeByDate: leaveTypeByDate,
-      );
+      // Cache the results
+      _saveCachedMonth(cacheKey, statuses, leaveTypeByDate);
+
+      // Only update state if still viewing this month
+      if (state.selectedYear == year && state.selectedMonth == month) {
+        state = state.copyWith(
+          monthDayStatuses: statuses,
+          leaveTypeByDate: leaveTypeByDate,
+        );
+      }
     } catch (_) {
       // Silently fail — statuses are visual only
     }
@@ -333,6 +395,10 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
     // Pre-fetch the new month's data when user swipes calendar
     _prefetchMonth(month.year, month.month);
     loadMonthStatuses(month.year, month.month);
+  }
+
+  void _invalidateMonthStatusCache(int year, int month) {
+    _removeCachedMonth('$year-$month');
   }
 
   Future<void> editSession({
@@ -362,6 +428,7 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
     _cache.remove(dateStr);
 
     await loadSessionsForDate(date);
+    _invalidateMonthStatusCache(state.selectedYear, state.selectedMonth);
     await loadMonthStatuses(state.selectedYear, state.selectedMonth);
   }
 
@@ -393,6 +460,7 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
 
     // Refresh data
     await loadSessionsForDate(date);
+    _invalidateMonthStatusCache(state.selectedYear, state.selectedMonth);
     await loadMonthStatuses(state.selectedYear, state.selectedMonth);
   }
 
@@ -402,6 +470,7 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
 
     await _repository.deleteSession(sessionId);
     await loadSessionsForDate(date);
+    _invalidateMonthStatusCache(state.selectedYear, state.selectedMonth);
     await loadMonthStatuses(state.selectedYear, state.selectedMonth);
   }
 }

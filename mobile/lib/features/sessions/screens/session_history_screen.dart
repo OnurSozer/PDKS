@@ -200,6 +200,7 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
         builder: (ctx, ref, _) {
           final state = ref.watch(sessionHistoryProvider);
           final isLeaveDay = state.dailySummary?['status'] == 'leave';
+          final hasSessions = state.sessions.isNotEmpty;
           final dateStr = AppDateUtils.formatDate(date);
           return DayBottomSheet(
             date: date,
@@ -210,10 +211,12 @@ class _SessionHistoryScreenState extends ConsumerState<SessionHistoryScreen> {
               Navigator.of(ctx).pop();
               _showManualSessionDialog(date);
             },
-            onMarkLeaveDay: () {
-              Navigator.of(ctx).pop();
-              _showLeaveTypeSelection(date);
-            },
+            onMarkLeaveDay: hasSessions
+                ? null
+                : () {
+                    Navigator.of(ctx).pop();
+                    _showLeaveTypeSelection(date);
+                  },
             onCancelLeave: isLeaveDay
                 ? () {
                     Navigator.of(ctx).pop();

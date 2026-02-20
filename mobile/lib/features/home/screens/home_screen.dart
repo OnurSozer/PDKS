@@ -147,44 +147,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                       // Welcome header — stays at top
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l10n.welcomeBack.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppConstants.primaryColor,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  authState.profile?.firstName ?? '',
-                                  style: const TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppConstants.textPrimary,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              l10n.welcomeBack.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppConstants.primaryColor,
+                                letterSpacing: 1.2,
+                              ),
                             ),
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: AppConstants.primaryColor.withValues(alpha: 0.1),
-                              child: Text(
-                                authState.profile != null && authState.profile!.firstName.isNotEmpty
-                                    ? authState.profile!.firstName[0].toUpperCase()
-                                    : '',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppConstants.primaryColor,
-                                ),
+                            const SizedBox(height: 4),
+                            Text(
+                              authState.profile?.firstName ?? '',
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                                color: AppConstants.textPrimary,
                               ),
                             ),
                           ],
@@ -263,13 +244,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                               onPressed: () => _handleClockAction(sessionState, l10n),
                               onLongPress: () => _handleClockLongPress(sessionState, l10n),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              l10n.customTimeHint,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppConstants.textMuted,
-                              ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.touch_app_outlined,
+                                  size: 14,
+                                  color: AppConstants.textSecondary.withValues(alpha: 0.6),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  l10n.customTimeHint,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppConstants.textSecondary.withValues(alpha: 0.6),
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 20),
 
@@ -337,6 +330,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         );
       }
       return;
+    }
+
+    // Validate clock-out is after clock-in
+    if (sessionState.isClockedIn) {
+      final clockIn = DateTime.parse(sessionState.activeSession!['clock_in'] as String);
+      if (!customDateTime.isAfter(clockIn)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.exitBeforeEntry),
+              backgroundColor: AppConstants.errorColor,
+            ),
+          );
+        }
+        return;
+      }
     }
 
     bool success;

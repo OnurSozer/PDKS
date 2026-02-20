@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/utils/date_utils.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../records/providers/records_provider.dart';
 import '../../leave/providers/leave_provider.dart';
@@ -216,32 +215,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 20),
 
             // Stat cards row
-            Row(
-              children: [
-                Expanded(
-                  child: _ProfileStatCard(
-                    icon: Icons.beach_access_outlined,
-                    iconColor: AppConstants.leaveColor,
-                    value: remainingLeave.toStringAsFixed(0),
-                    unit: l10n.dayUnit,
-                    label: l10n.remainingLeaveShort,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _ProfileStatCard(
-                    icon: Icons.timer_outlined,
-                    iconColor: AppConstants.clockInColor,
-                    value: AppDateUtils.formatDurationLocalized(
-                      recordsState.totalWorkedMinutes,
-                      l10n.hoursAbbrev,
-                      l10n.minutesAbbrev,
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _ProfileStatCard(
+                      icon: Icons.beach_access_outlined,
+                      iconColor: AppConstants.leaveColor,
+                      value: '${remainingLeave.toStringAsFixed(0)} ${l10n.dayUnit}',
+                      label: l10n.remainingLeaveShort,
                     ),
-                    unit: '',
-                    label: l10n.thisMonth,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ProfileStatCard(
+                      icon: Icons.timer_outlined,
+                      iconColor: AppConstants.clockInColor,
+                      value: _formatTimeFull(
+                        recordsState.totalWorkedMinutes,
+                        l10n.hoursFull,
+                        l10n.minutesFull,
+                      ),
+                      label: l10n.thisMonth,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
 
@@ -322,6 +322,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  String _formatTimeFull(int totalMinutes, String hoursFull, String minutesFull) {
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    if (minutes == 0) return '$hours $hoursFull';
+    return '$hours $hoursFull $minutes $minutesFull';
+  }
+
   Widget _buildViewProfile(AppLocalizations l10n, UserProfile? profile) {
     return Container(
       decoration: BoxDecoration(
@@ -352,14 +359,12 @@ class _ProfileStatCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String value;
-  final String unit;
   final String label;
 
   const _ProfileStatCard({
     required this.icon,
     required this.iconColor,
     required this.value,
-    required this.unit,
     required this.label,
   });
 
@@ -375,46 +380,35 @@ class _ProfileStatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: iconColor),
-          ),
-          const SizedBox(height: 10),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppConstants.textPrimary,
-                ),
-              ),
-              if (unit.isNotEmpty) ...[
-                const SizedBox(width: 4),
-                Text(
-                  unit,
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
                   style: const TextStyle(
                     fontSize: 13,
+                    fontWeight: FontWeight.w500,
                     color: AppConstants.textSecondary,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
+              ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppConstants.textSecondary,
+          const SizedBox(height: 12),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: AppConstants.textPrimary,
+              ),
             ),
           ),
         ],

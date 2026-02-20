@@ -90,6 +90,20 @@ serve(async (req) => {
       }
     }
 
+    // Check for existing work sessions in the leave date range
+    const { data: existingSessions } = await supabaseAdmin
+      .from("work_sessions")
+      .select("id, session_date")
+      .eq("employee_id", user.id)
+      .neq("status", "cancelled")
+      .gte("session_date", start_date)
+      .lte("session_date", end_date)
+      .limit(1);
+
+    if (existingSessions && existingSessions.length > 0) {
+      throw new Error("Cannot record leave: work sessions exist for one or more days in this range");
+    }
+
     // Get leave type info
     const { data: leaveType, error: ltError } = await supabaseAdmin
       .from("leave_types")

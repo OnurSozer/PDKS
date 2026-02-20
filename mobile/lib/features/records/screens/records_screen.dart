@@ -379,82 +379,94 @@ class _StatsGrid extends StatelessWidget {
     return Column(
       children: [
         // Row 1: Worked Days | Expected Hours
-        Row(
-          children: [
-            Expanded(child: _StatCard(
-              icon: Icons.calendar_today,
-              iconColor: AppConstants.primaryColor,
-              title: l10n.workedDays,
-              value: '${state.workDaysCount} ${l10n.daysFull}',
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: _StatCard(
-              icon: Icons.schedule_outlined,
-              iconColor: const Color(0xFF6366F1),
-              title: l10n.expectedHours,
-              value: _formatTimeFull(state.totalExpectedMinutes),
-            )),
-          ],
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _StatCard(
+                icon: Icons.calendar_today,
+                iconColor: AppConstants.primaryColor,
+                title: l10n.workedDays,
+                value: '${state.workDaysCount} ${l10n.daysFull}',
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(
+                icon: Icons.schedule_outlined,
+                iconColor: const Color(0xFF6366F1),
+                title: l10n.expectedHours,
+                value: _formatTimeFull(state.totalExpectedMinutes),
+              )),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         // Row 2: Total Duration | Net Hours
-        Row(
-          children: [
-            Expanded(child: _StatCard(
-              icon: Icons.timer_outlined,
-              iconColor: AppConstants.clockInColor,
-              title: l10n.totalDuration,
-              value: _formatTimeFull(state.totalWorkedMinutes),
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: _StatCard(
-              icon: netMin >= 0 ? Icons.trending_up : Icons.trending_down,
-              iconColor: netColor,
-              title: l10n.netHours,
-              value: '$netSign${_formatTimeFull(netMin.abs())}',
-              valueColor: netColor,
-            )),
-          ],
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _StatCard(
+                icon: Icons.timer_outlined,
+                iconColor: AppConstants.clockInColor,
+                title: l10n.totalDuration,
+                value: _formatTimeFull(state.totalWorkedMinutes),
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(
+                icon: netMin >= 0 ? Icons.trending_up : Icons.trending_down,
+                iconColor: netColor,
+                title: l10n.netHours,
+                value: '$netSign${_formatTimeFull(netMin.abs())}',
+                valueColor: netColor,
+              )),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         // Row 3: Daily Average | Deficit
-        Row(
-          children: [
-            Expanded(child: _StatCard(
-              icon: Icons.speed_outlined,
-              iconColor: AppConstants.overtimeColor,
-              title: l10n.dailyAverage,
-              value: _formatTimeFull(state.dailyAverageMinutes),
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: _StatCard(
-              icon: Icons.remove_circle_outline,
-              iconColor: const Color(0xFFF43F5E),
-              title: l10n.deficitHours,
-              value: state.totalDeficitMinutes > 0
-                  ? _formatTimeFull(state.totalDeficitMinutes)
-                  : l10n.none,
-            )),
-          ],
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _StatCard(
+                icon: Icons.speed_outlined,
+                iconColor: AppConstants.overtimeColor,
+                title: l10n.dailyAverage,
+                value: _formatTimeFull(state.dailyAverageMinutes),
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(
+                icon: Icons.remove_circle_outline,
+                iconColor: const Color(0xFFF43F5E),
+                title: l10n.deficitHours,
+                value: state.totalDeficitMinutes > 0
+                    ? _formatTimeFull(state.totalDeficitMinutes)
+                    : l10n.none,
+              )),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         // Row 4: Annual Leave | Sick Leave
-        Row(
-          children: [
-            Expanded(child: _StatCard(
-              icon: Icons.beach_access_outlined,
-              iconColor: AppConstants.leaveColor,
-              title: l10n.annualLeaveUsage,
-              value: '${state.usedAnnualLeaveDays} ${l10n.daysFull}',
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: _StatCard(
-              icon: Icons.local_hospital_outlined,
-              iconColor: AppConstants.sickLeaveColor,
-              title: l10n.sickLeaveUsage,
-              value: '${state.usedSickLeaveDays} ${l10n.daysFull}',
-            )),
-          ],
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _StatCard(
+                icon: Icons.beach_access_outlined,
+                iconColor: AppConstants.leaveColor,
+                title: l10n.annualLeaveUsage,
+                value: '${state.usedAnnualLeaveDays} ${l10n.daysFull}',
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(
+                icon: Icons.local_hospital_outlined,
+                iconColor: AppConstants.sickLeaveColor,
+                title: l10n.sickLeaveUsage,
+                value: '${state.usedSickLeaveDays} ${l10n.daysFull}',
+              )),
+            ],
+          ),
         ),
       ],
     );
@@ -506,12 +518,17 @@ class _StatCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: valueColor ?? AppConstants.textPrimary,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: valueColor ?? AppConstants.textPrimary,
+              ),
             ),
           ),
         ],

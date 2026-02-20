@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../home/repositories/session_repository.dart';
 import '../../home/providers/session_provider.dart';
 import '../../leave/providers/leave_provider.dart';
@@ -163,16 +165,68 @@ class RecordsState {
 class RecordsNotifier extends StateNotifier<RecordsState> {
   final SessionRepository _repository;
   final String? _employeeId;
+  SharedPreferences? _prefs;
 
   RecordsNotifier(this._repository, this._employeeId) : super(RecordsState()) {
     if (_employeeId != null) {
-      loadRecords();
+      _init();
     }
+  }
+
+  Future<void> _init() async {
+    _prefs = await SharedPreferences.getInstance();
+    // Show cached data for current month instantly
+    _applyCachedStats(state.selectedYear, state.selectedMonth);
+    loadRecords();
+  }
+
+  String _cacheKey(int year, int month) => 'records_stats_${_employeeId}_$year-$month';
+
+  Map<String, dynamic>? _getCachedStats(int year, int month) {
+    final raw = _prefs?.getString(_cacheKey(year, month));
+    if (raw == null) return null;
+    return Map<String, dynamic>.from(json.decode(raw) as Map);
+  }
+
+  void _saveCachedStats(int year, int month, Map<String, dynamic> data) {
+    _prefs?.setString(_cacheKey(year, month), json.encode(data));
+  }
+
+  void _applyCachedStats(int year, int month) {
+    final cached = _getCachedStats(year, month);
+    if (cached == null) return;
+    state = state.copyWith(
+      isLoading: false,
+      selectedYear: year,
+      selectedMonth: month,
+      totalWorkMinutes: cached['totalWorkMinutes'] as int? ?? 0,
+      expectedWorkMinutes: cached['expectedWorkMinutes'] as int? ?? 0,
+      scheduleDailyMinutes: cached['scheduleDailyMinutes'] as int? ?? 0,
+      workDays: cached['workDays'] as int? ?? 0,
+      netMinutes: cached['netMinutes'] as int? ?? 0,
+      deficitMinutes: cached['deficitMinutes'] as int? ?? 0,
+      overtimeValueMinutes: cached['overtimeValueMinutes'] as int? ?? 0,
+      overtimeDaysValue: (cached['overtimeDaysValue'] as num?)?.toDouble() ?? 0,
+      overtimePercentageValue: (cached['overtimePercentageValue'] as num?)?.toDouble() ?? 0,
+      lateDays: cached['lateDays'] as int? ?? 0,
+      absentDays: cached['absentDays'] as int? ?? 0,
+      leaveDays: cached['leaveDays'] as int? ?? 0,
+      annualLeaveDays: cached['annualLeaveDays'] as int? ?? 0,
+      sickLeaveDays: cached['sickLeaveDays'] as int? ?? 0,
+      overtimeMultiplier: (cached['overtimeMultiplier'] as num?)?.toDouble() ?? 1.5,
+      monthlyConstant: (cached['monthlyConstant'] as num?)?.toDouble() ?? 21.66,
+    );
   }
 
   Future<void> loadRecords() async {
     if (_employeeId == null) return;
-    state = state.copyWith(isLoading: true, error: null);
+
+    // Only show loading spinner if we have no cached data
+    final hasCached = _getCachedStats(state.selectedYear, state.selectedMonth) != null;
+    if (!hasCached) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
+
     try {
       final monthStr = '${state.selectedYear}-${state.selectedMonth.toString().padLeft(2, '0')}';
       final monthDate = DateTime(state.selectedYear, state.selectedMonth, 1);
@@ -213,32 +267,68 @@ class RecordsNotifier extends StateNotifier<RecordsState> {
       final otMultiplier = double.tryParse(settings['overtime_multiplier']?.toString() ?? '') ?? 1.5;
       final monthlyConst = double.tryParse(settings['monthly_work_days_constant']?.toString() ?? '') ?? 21.66;
 
+      final freshTotalWork = empSummary?['total_work_minutes'] as int? ?? 0;
+      final freshExpected = empSummary?['expected_work_minutes'] as int? ?? 0;
+      final freshScheduleDaily = empSummary?['schedule_daily_expected'] as int? ?? 0;
+      final freshWorkDays = empSummary?['work_days'] as int? ?? 0;
+      final freshNet = empSummary?['net_minutes'] as int? ?? 0;
+      final freshDeficit = empSummary?['deficit_minutes'] as int? ?? 0;
+      final freshOtValue = empSummary?['overtime_value'] as int? ?? 0;
+      final freshOtDays = (empSummary?['overtime_days'] as num?)?.toDouble() ?? 0;
+      final freshOtPct = (empSummary?['overtime_percentage'] as num?)?.toDouble() ?? 0;
+      final freshLate = empSummary?['late_days'] as int? ?? 0;
+      final freshAbsent = empSummary?['absent_days'] as int? ?? 0;
+      final freshLeave = empSummary?['leave_days'] as int? ?? 0;
+      final freshAnnual = empSummary?['annual_leave_days'] as int? ?? 0;
+      final freshSick = empSummary?['sick_leave_days'] as int? ?? 0;
+
       state = state.copyWith(
         isLoading: false,
         recentSessions: sessions,
-        totalWorkMinutes: empSummary?['total_work_minutes'] as int? ?? 0,
-        expectedWorkMinutes: empSummary?['expected_work_minutes'] as int? ?? 0,
-        scheduleDailyMinutes: empSummary?['schedule_daily_expected'] as int? ?? 0,
-        workDays: empSummary?['work_days'] as int? ?? 0,
-        netMinutes: empSummary?['net_minutes'] as int? ?? 0,
-        deficitMinutes: empSummary?['deficit_minutes'] as int? ?? 0,
-        overtimeValueMinutes: empSummary?['overtime_value'] as int? ?? 0,
-        overtimeDaysValue: (empSummary?['overtime_days'] as num?)?.toDouble() ?? 0,
-        overtimePercentageValue: (empSummary?['overtime_percentage'] as num?)?.toDouble() ?? 0,
-        lateDays: empSummary?['late_days'] as int? ?? 0,
-        absentDays: empSummary?['absent_days'] as int? ?? 0,
-        leaveDays: empSummary?['leave_days'] as int? ?? 0,
-        annualLeaveDays: empSummary?['annual_leave_days'] as int? ?? 0,
-        sickLeaveDays: empSummary?['sick_leave_days'] as int? ?? 0,
+        totalWorkMinutes: freshTotalWork,
+        expectedWorkMinutes: freshExpected,
+        scheduleDailyMinutes: freshScheduleDaily,
+        workDays: freshWorkDays,
+        netMinutes: freshNet,
+        deficitMinutes: freshDeficit,
+        overtimeValueMinutes: freshOtValue,
+        overtimeDaysValue: freshOtDays,
+        overtimePercentageValue: freshOtPct,
+        lateDays: freshLate,
+        absentDays: freshAbsent,
+        leaveDays: freshLeave,
+        annualLeaveDays: freshAnnual,
+        sickLeaveDays: freshSick,
         overtimeMultiplier: otMultiplier,
         monthlyConstant: monthlyConst,
       );
+
+      // Persist to cache
+      _saveCachedStats(state.selectedYear, state.selectedMonth, {
+        'totalWorkMinutes': freshTotalWork,
+        'expectedWorkMinutes': freshExpected,
+        'scheduleDailyMinutes': freshScheduleDaily,
+        'workDays': freshWorkDays,
+        'netMinutes': freshNet,
+        'deficitMinutes': freshDeficit,
+        'overtimeValueMinutes': freshOtValue,
+        'overtimeDaysValue': freshOtDays,
+        'overtimePercentageValue': freshOtPct,
+        'lateDays': freshLate,
+        'absentDays': freshAbsent,
+        'leaveDays': freshLeave,
+        'annualLeaveDays': freshAnnual,
+        'sickLeaveDays': freshSick,
+        'overtimeMultiplier': otMultiplier,
+        'monthlyConstant': monthlyConst,
+      });
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   Future<void> loadRecordsForMonth(int year, int month) async {
+    _applyCachedStats(year, month);
     state = state.copyWith(selectedYear: year, selectedMonth: month);
     await loadRecords();
   }
