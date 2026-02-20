@@ -272,37 +272,6 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
         monthDate,
       );
 
-      // Fetch schedule to compute expected per day from live shift data
-      int dailyExpected = 0;
-      Set<int> workDayNums = {};
-
-      final schedule = await SupabaseService.client
-          .from('employee_schedules')
-          .select('*, shift_template:shift_templates(*)')
-          .eq('employee_id', _employeeId!)
-          .lte('effective_from', endStr)
-          .or('effective_to.is.null,effective_to.gte.$startStr')
-          .order('effective_from', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      if (schedule != null) {
-        final template = schedule['shift_template'] as Map<String, dynamic>?;
-        final workDays = (template?['work_days'] ?? schedule['custom_work_days']) as List<dynamic>?;
-        final startTime = (template?['start_time'] ?? schedule['custom_start_time']) as String?;
-        final endTime = (template?['end_time'] ?? schedule['custom_end_time']) as String?;
-        final breakMinutes = (template?['break_duration_minutes'] ?? schedule['custom_break_duration_minutes'] ?? 0) as int;
-
-        if (workDays != null && startTime != null && endTime != null) {
-          final startParts = startTime.split(':');
-          final endParts = endTime.split(':');
-          final startMin = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
-          final endMin = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
-          dailyExpected = endMin - startMin - breakMinutes;
-          workDayNums = workDays.map((d) => d is int ? d : int.parse(d.toString())).toSet();
-        }
-      }
-
       // Fetch leave records for the month to identify leave types
       final leaveTypeByDate = <String, String>{};
       try {
@@ -338,21 +307,10 @@ class SessionHistoryNotifier extends StateNotifier<SessionHistoryState> {
       final statuses = <String, String>{};
       for (final s in summaries) {
         final dateStr = s['summary_date'] as String;
-        final totalWork = s['total_work_minutes'] as int? ?? 0;
-        final overtime = s['total_overtime_minutes'] as int? ?? 0;
+        final totalWork = (s['total_work_minutes'] as num?)?.toInt() ?? 0;
+        final overtime = (s['total_overtime_minutes'] as num?)?.toInt() ?? 0;
+        final expected = (s['expected_work_minutes'] as num?)?.toInt() ?? 0;
         final dayStatus = s['status'] as String? ?? '';
-
-        // Compute expected from schedule, not from stale daily_summaries
-        int expected = 0;
-        if (dailyExpected > 0 && dateStr.length >= 10) {
-          final parts = dateStr.split('-');
-          if (parts.length == 3) {
-            final d = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-            if (workDayNums.contains(d.weekday)) {
-              expected = dailyExpected;
-            }
-          }
-        }
 
         if (dayStatus == 'leave') {
           // Check if it's sick leave
